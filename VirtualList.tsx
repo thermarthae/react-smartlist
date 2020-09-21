@@ -58,10 +58,12 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 	}
 
 	public componentDidUpdate(prevProps: TProps<I, C>, prevState: TState) {
-		const { items } = this.props;
-		if (items !== prevProps.items) this.handleScroll();
+		const { props, state } = this;
+		if (prevProps.items !== props.items) {
+			this.handleScroll();
+		}
 
-		if (prevState.listHeight !== this.state.listHeight) {
+		if (prevState.listHeight !== state.listHeight) {
 			this.handleListHeightChange();
 		}
 	}
