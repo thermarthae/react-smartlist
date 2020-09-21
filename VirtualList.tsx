@@ -62,23 +62,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		if (items !== prevProps.items) this.handleScroll();
 
 		if (prevState.listHeight !== this.state.listHeight) {
-			const anchor = this.anchorItem;
-			const listEl = this.listElRef.current;
-			if (!anchor || !listEl) return;
-
-			const {
-				index,
-				offset,
-				height,
-			} = anchor;
-			const { offsetTop } = listEl;
-			const nailPoint = this.state.nailPoints[index];
-			const currentHeight = this.getItemHeight(items[index]);
-
-			const newScrollTop = offsetTop + nailPoint + ((offset - height) + currentHeight);
-			if (newScrollTop <= offsetTop) return;
-
-			document.documentElement.scrollTop = newScrollTop;
+			this.handleListHeightChange();
 		}
 	}
 
@@ -109,6 +93,27 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 	private handleResize = () => {
 		this.heightCache.clear();
 		this.handleScroll();
+	};
+
+	private handleListHeightChange = () => {
+		const anchor = this.anchorItem;
+		const listEl = this.listElRef.current;
+		if (!anchor || !listEl) return;
+
+		const { nailPoints } = this.state;
+		const {
+			index,
+			offset,
+			height,
+		} = anchor;
+		const { offsetTop } = listEl;
+		const nailPoint = nailPoints[index];
+		const currentHeight = this.getItemHeight(this.props.items[index]);
+
+		const newScrollTop = offsetTop + nailPoint + ((offset - height) + currentHeight);
+		if (newScrollTop <= offsetTop) return;
+
+		document.documentElement.scrollTop = newScrollTop;
 	};
 
 	private getWindowEdges = (): TEdges => {
