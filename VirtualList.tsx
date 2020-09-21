@@ -190,7 +190,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			this.anchorItem = {
 				index: firstIndex,
-				offset: topEdge - state.nailPoints[firstIndex] - 1,
+				offset: topEdge - state.nailPoints[firstIndex],
 				height: this.getItemHeight(items[firstIndex]),
 			};
 
