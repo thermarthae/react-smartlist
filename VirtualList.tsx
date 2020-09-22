@@ -6,6 +6,7 @@ type TItemID = string | number;
 type TEdges = {
 	bottomEdge: number;
 	topEdge: number;
+	rawTopEdge: number;
 	scrollDiff: number;
 	isInView: boolean;
 };
@@ -43,7 +44,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private heightCache = new Map<I, number>();
 
-	private lastViewEdgePosition: number | null = null;
+	private lastWindowEdges: TEdges | null = null;
 
 	private anchorItem: {
 		index: number;
@@ -134,15 +135,18 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		const bottomEdge = overscanedBottomEdge > 0 ? Math.min(scrollHeight, overscanedBottomEdge) : 0;
 		const topEdge = overscanedTopEdge > 0 ? Math.min(overscanedTopEdge, bottomEdge) : 0;
 
-		const scrollDiff = rawTopEdge - (this.lastViewEdgePosition || rawTopEdge);
-		this.lastViewEdgePosition = rawTopEdge;
+		const scrollDiff = rawTopEdge - (this.lastWindowEdges?.rawTopEdge || rawTopEdge);
 
-		return {
+		const edges = {
 			bottomEdge,
 			topEdge,
+			rawTopEdge,
 			scrollDiff,
 			isInView: bottomEdge !== topEdge,
 		};
+
+		this.lastWindowEdges = edges;
+		return edges;
 	};
 
 	private getVisibleItems = ({ scrollDiff, topEdge, bottomEdge }: TEdges) => {
