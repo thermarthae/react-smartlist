@@ -149,11 +149,11 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		return edges;
 	};
 
-	private getVisibleItems = ({ scrollDiff, topEdge, bottomEdge }: TEdges) => {
+	private getVisibleItems = (edges: TEdges) => {
 		this.setState((state, { items }) => {
 			const { pivotIndex } = state;
 			const indexOfLastArrItem = items.length - 1;
-			const isMovingBottom = scrollDiff >= 0;
+			const isMovingBottom = edges.scrollDiff >= 0;
 
 			let firstIndex: null | number = null;
 			let lastIndex: null | number = null;
@@ -171,10 +171,8 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 					i = pivotIndex;
 				}
 
-				const item = items[i];
 				const nailPoint = state.nailPoints[i];
-				const height = this.getItemHeight(item);
-				const isVisible = (topEdge <= nailPoint + height) && (nailPoint <= bottomEdge);
+				const isVisible = this.getItemVisibility(items[i], nailPoint, edges);
 
 				if (isVisible) {
 					if (firstIndex === null || i < firstIndex) firstIndex = i;
@@ -194,7 +192,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			this.anchorItem = {
 				index: firstIndex,
-				offset: topEdge - state.nailPoints[firstIndex],
+				offset: edges.topEdge - state.nailPoints[firstIndex],
 				height: this.getItemHeight(items[firstIndex]),
 			};
 
@@ -234,6 +232,14 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private getItemHeight = (itemData: I) => {
 		return this.heightCache.get(itemData) ?? this.props.estimatedItemHeight;
+	};
+
+	private getItemVisibility = (item: I, nailPoint: number, edges = this.lastWindowEdges) => {
+		if (!edges) return false;
+		const height = this.getItemHeight(item);
+
+		const isVisible = (edges.topEdge <= nailPoint + height) && (nailPoint <= edges.bottomEdge);
+		return isVisible;
 	};
 
 	public render() {
