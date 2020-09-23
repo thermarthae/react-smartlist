@@ -223,9 +223,25 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			const height = this.getItemHeight(items[lastIndex]);
 			const listHeight = nailPoint + height;
 
+			let newFirstIndex = state.firstIndex;
+			while (newFirstIndex > 0) {
+				const index = newFirstIndex - 1;
+				if (!this.getItemVisibility(items[index], newNailPoints[index])) break;
+				newFirstIndex = index;
+			}
+
+			let newLastIndex = state.lastIndex;
+			while (newLastIndex < newNailPoints.length - 1) {
+				const index = newLastIndex + 1;
+				if (!this.getItemVisibility(items[index], newNailPoints[index])) break;
+				newLastIndex = index;
+			}
+
 			return {
 				listHeight,
 				nailPoints: newNailPoints,
+				firstIndex: newFirstIndex,
+				lastIndex: newLastIndex,
 			};
 		});
 	};
