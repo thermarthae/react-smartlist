@@ -3,12 +3,19 @@ import React from 'react';
 import VirtualListItem from './VirtualListItem';
 
 type TItemID = string | number;
+
 type TEdges = {
 	bottomEdge: number;
 	topEdge: number;
 	rawTopEdge: number;
 	scrollDiff: number;
 	isInView: boolean;
+};
+
+type TAnchor = {
+	index: number;
+	offset: number;
+	height: number;
 };
 
 //
@@ -46,26 +53,38 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private lastWindowEdges: TEdges | null = null;
 
-	private anchorItem: {
-		index: number;
-		offset: number;
-		height: number;
-	} | null = null;
-
 	public componentDidMount() {
 		document.addEventListener('scroll', this.handleScroll);
 		window.addEventListener('resize', this.handleResize);
 		this.handleScroll();
 	}
 
-	public componentDidUpdate(prevProps: TProps<I, C>, prevState: TState) {
-		const { props, state } = this;
+	public getSnapshotBeforeUpdate(prevProps: TProps<I, C>, prevState: TState) {
+		const { state } = this;
+
+		if (prevState.listHeight !== state.listHeight) {
+			const { items } = prevProps;
+			const { nailPoints, pivotIndex } = prevState;
+			const { rawTopEdge = 0 } = this.lastWindowEdges || {};
+
+			return {
+				index: pivotIndex,
+				offset: rawTopEdge - nailPoints[pivotIndex],
+				height: this.getItemHeight(items[pivotIndex]),
+			} as TAnchor;
+		}
+
+		return null;
+	}
+
+	public componentDidUpdate(prevProps: TProps<I, C>, _prevState: TState, snapshot?: TAnchor) {
+		const { props } = this;
 		if (prevProps.items !== props.items) {
 			this.handleScroll();
 		}
 
-		if (prevState.listHeight !== state.listHeight) {
-			this.handleListHeightChange();
+		if (snapshot) {
+			this.handleListHeightChange(snapshot);
 		}
 	}
 
@@ -98,10 +117,9 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		this.handleScroll();
 	};
 
-	private handleListHeightChange = () => {
-		const anchor = this.anchorItem;
+	private handleListHeightChange = (anchor: TAnchor) => {
 		const listEl = this.listElRef.current;
-		if (!anchor || !listEl) return;
+		if (!listEl) return;
 
 		const { nailPoints } = this.state;
 		const {
@@ -151,55 +169,65 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private getVisibleItems = (edges: TEdges) => {
 		this.setState((state, { items }) => {
-			const { pivotIndex } = state;
-			const indexOfLastArrItem = items.length - 1;
 			const isMovingBottom = edges.scrollDiff >= 0;
 
 			let firstIndex: null | number = null;
 			let lastIndex: null | number = null;
-			const lastVisible = isMovingBottom ? state.firstIndex : state.lastIndex;
 
-			let isMainSideDone = false;
-			let direction = isMovingBottom ? 1 : -1;
+			{
+				const { pivotIndex } = state;
+				const indexOfLastArrItem = items.length - 1;
+				const lastVisible = isMovingBottom ? state.firstIndex : state.lastIndex;
+				let isMainSideDone = false;
+				let direction = isMovingBottom ? 1 : -1;
 
-			for (let i = pivotIndex; true; i += direction) { // eslint-disable-line no-constant-condition
-				if (i < 0 || i > indexOfLastArrItem) {
-					if (isMainSideDone) break;
+				for (let i = pivotIndex; true; i += direction) { // eslint-disable-line no-constant-condition
+					if (i < 0 || i > indexOfLastArrItem) {
+						if (isMainSideDone) break;
 
-					isMainSideDone = true;
-					direction *= -1;
-					i = pivotIndex;
-				}
-
-				const nailPoint = state.nailPoints[i];
-				const isVisible = this.getItemVisibility(items[i], nailPoint, edges);
-
-				if (isVisible) {
-					if (firstIndex === null || i < firstIndex) firstIndex = i;
-					if (lastIndex === null || i > lastIndex) lastIndex = i;
-				} else if (firstIndex !== null) {
-					if (!isMainSideDone) {
 						isMainSideDone = true;
 						direction *= -1;
 						i = pivotIndex;
-					} else if ((isMovingBottom && i <= lastVisible) || (!isMovingBottom && i >= lastVisible)) {
-						break;
+					}
+
+					const nailPoint = state.nailPoints[i];
+					const isVisible = this.getItemVisibility(items[i], nailPoint, edges);
+
+					if (isVisible) {
+						if (firstIndex === null || i < firstIndex) firstIndex = i;
+						if (lastIndex === null || i > lastIndex) lastIndex = i;
+					} else if (firstIndex !== null) {
+						if (!isMainSideDone) {
+							isMainSideDone = true;
+							direction *= -1;
+							i = pivotIndex;
+						} else if ((isMovingBottom && i <= lastVisible) || (!isMovingBottom && i >= lastVisible)) {
+							break;
+						}
 					}
 				}
+
+				if (firstIndex === null || lastIndex === null) throw new Error('Bug! No visible items');
 			}
 
-			if (firstIndex === null || lastIndex === null) throw new Error('Bug! No visible items');
 
-			this.anchorItem = {
-				index: firstIndex,
-				offset: edges.topEdge - state.nailPoints[firstIndex],
-				height: this.getItemHeight(items[firstIndex]),
-			};
+			let pivotIndex = isMovingBottom ? state.lastIndex : state.firstIndex;
+			{
+				const direction = isMovingBottom ? -1 : 1;
+
+				while (
+					!this.heightCache.has(items[pivotIndex])
+					&& (firstIndex <= pivotIndex && pivotIndex <= lastIndex)
+					&& (0 < pivotIndex && pivotIndex < items.length)
+				) {
+					pivotIndex += direction;
+				}
+			}
 
 			return {
 				firstIndex,
 				lastIndex,
-				pivotIndex: firstIndex + Math.floor((lastIndex - firstIndex) / 2),
+				pivotIndex,
 			};
 		});
 	};
