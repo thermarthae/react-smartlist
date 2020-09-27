@@ -55,7 +55,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	public componentDidMount() {
 		document.addEventListener('scroll', this.handleScroll);
-		window.addEventListener('resize', this.handleResize);
+		window.addEventListener('resize', this.handleScroll);
 		this.handleScroll();
 	}
 
@@ -90,7 +90,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	public componentWillUnmount() {
 		document.removeEventListener('scroll', this.handleScroll);
-		window.removeEventListener('resize', this.handleResize);
+		window.removeEventListener('resize', this.handleScroll);
 	}
 
 	private handleScroll = () => {
@@ -113,7 +113,6 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 	};
 
 	private handleResize = () => {
-		this.heightCache.clear();
 		this.handleScroll();
 	};
 
