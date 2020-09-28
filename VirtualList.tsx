@@ -31,6 +31,7 @@ type TProps<Item, Component extends React.ElementType = React.ElementType> = {
 };
 
 type TState = {
+	isInView: boolean;
 	nailPoints: readonly number[];
 	listHeight: number;
 	firstIndex: number;
@@ -40,6 +41,7 @@ type TState = {
 
 class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState> {
 	public state: TState = {
+		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
 		listHeight: this.props.items.length * this.props.estimatedItemHeight,
 		firstIndex: 0,
@@ -100,14 +102,16 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		if (isInView) {
 			this.getVisibleItems(edges);
 		} else {
-			let dummyIndex = 0;
-			if (edges.topEdge !== 0) dummyIndex = this.props.items.length - 1;
+			let dummyPivot = 0;
+			if (edges.topEdge !== 0) dummyPivot = this.props.items.length - 1;
 
-			if (this.state.pivotIndex === dummyIndex) return;
+			// Bailout if a state doesn't require an update to prevent empty render commit.
+			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
+			if (this.state.pivotIndex === dummyPivot && this.state.isInView !== false) return;
+
 			this.setState({
-				firstIndex: dummyIndex,
-				lastIndex: dummyIndex,
-				pivotIndex: dummyIndex,
+				isInView: false,
+				pivotIndex: dummyPivot,
 			});
 		}
 	};
@@ -220,6 +224,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			}
 
 			return {
+				isInView: true,
 				firstIndex,
 				lastIndex,
 				pivotIndex,
@@ -290,6 +295,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			sharedProps,
 		} = this.props;
 		const {
+			isInView,
 			firstIndex,
 			lastIndex,
 			nailPoints,
@@ -306,7 +312,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 					paddingBottom: listHeight,
 				}}
 			>
-				{items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
+				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
 					const itemID = itemKey(itemData);
 					const index = firstIndex + i;
 					return (
