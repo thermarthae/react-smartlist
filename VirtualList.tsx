@@ -210,7 +210,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			}
 
 
-			let pivotIndex = isMovingBottom ? state.lastIndex : state.firstIndex;
+			let pivotIndex = isMovingBottom ? lastIndex : firstIndex;
 			{
 				const direction = isMovingBottom ? -1 : 1;
 
