@@ -168,6 +168,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private getVisibleItems = (edges: TEdges) => {
 		this.setState((state, { items }) => {
+			const indexOfLastArrItem = items.length - 1;
 			const isMovingBottom = edges.scrollDiff >= 0;
 
 			let firstIndex: null | number = null;
@@ -175,7 +176,6 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			{
 				const { pivotIndex } = state;
-				const indexOfLastArrItem = items.length - 1;
 				const lastVisible = isMovingBottom ? state.firstIndex : state.lastIndex;
 				let isMainSideDone = false;
 				let direction = isMovingBottom ? 1 : -1;
@@ -217,7 +217,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 				while (
 					!this.heightCache.has(items[pivotIndex])
 					&& (firstIndex <= pivotIndex && pivotIndex <= lastIndex)
-					&& (0 < pivotIndex && pivotIndex < items.length)
+					&& (0 < pivotIndex && pivotIndex < indexOfLastArrItem)
 				) {
 					pivotIndex += direction;
 				}
