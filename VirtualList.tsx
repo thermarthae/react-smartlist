@@ -112,10 +112,6 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		}
 	};
 
-	private handleResize = () => {
-		this.handleScroll();
-	};
-
 	private handleListHeightChange = (anchor: TAnchor) => {
 		const listEl = this.listElRef.current;
 		if (!listEl) return;
