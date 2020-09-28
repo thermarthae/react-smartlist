@@ -107,7 +107,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			// Bailout if a state doesn't require an update to prevent empty render commit.
 			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-			if (this.state.pivotIndex === dummyPivot && this.state.isInView !== false) return;
+			if (this.state.pivotIndex === dummyPivot && this.state.isInView === false) return;
 
 			this.setState({
 				isInView: false,
