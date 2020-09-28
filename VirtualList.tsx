@@ -168,66 +168,56 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private getVisibleItems = (edges: TEdges) => {
 		this.setState((state, { items }) => {
+			const { nailPoints } = state;
 			const indexOfLastArrItem = items.length - 1;
 			const isMovingBottom = edges.scrollDiff >= 0;
+			const initIndex = isMovingBottom ? state.lastIndex : state.firstIndex;
 
-			let firstIndex: null | number = null;
-			let lastIndex: null | number = null;
+			let isMainSideDone = false;
+			let direction = isMovingBottom ? 1 : -1;
 
-			{
-				const { pivotIndex } = state;
-				const lastVisible = isMovingBottom ? state.firstIndex : state.lastIndex;
-				let isMainSideDone = false;
-				let direction = isMovingBottom ? 1 : -1;
+			let newFirstIndex: null | number = null;
+			let newLastIndex: null | number = null;
+			let newPivotIndex: null | number = null;
 
-				for (let i = pivotIndex; true; i += direction) { // eslint-disable-line no-constant-condition
-					if (i < 0 || i > indexOfLastArrItem) {
-						if (isMainSideDone) break;
+			for (let i = initIndex; true; i += direction) { // eslint-disable-line no-constant-condition
+				if (i < 0 || indexOfLastArrItem < i) {
+					if (isMainSideDone) break;
 
-						isMainSideDone = true;
-						direction *= -1;
-						i = pivotIndex;
-					}
-
-					const nailPoint = state.nailPoints[i];
-					const isVisible = this.getItemVisibility(items[i], nailPoint, edges);
-
-					if (isVisible) {
-						if (firstIndex === null || i < firstIndex) firstIndex = i;
-						if (lastIndex === null || i > lastIndex) lastIndex = i;
-					} else if (firstIndex !== null) {
-						if (!isMainSideDone) {
-							isMainSideDone = true;
-							direction *= -1;
-							i = pivotIndex;
-						} else if ((isMovingBottom && i <= lastVisible) || (!isMovingBottom && i >= lastVisible)) {
-							break;
-						}
-					}
+					isMainSideDone = true;
+					direction *= -1;
+					i = initIndex;
 				}
 
-				if (firstIndex === null || lastIndex === null) throw new Error('Bug! No visible items');
+				const item = items[i];
+				const nailPoint = nailPoints[i];
+				const isVisible = this.getItemVisibility(item, nailPoint, edges);
+
+				if (isVisible) {
+					if (newFirstIndex === null || i < newFirstIndex) newFirstIndex = i;
+					if (newLastIndex === null || i > newLastIndex) newLastIndex = i;
+
+					if (!newPivotIndex && this.heightCache.has(item)) {
+						newPivotIndex = i;
+					}
+				} else if (newFirstIndex !== null) {
+					if (isMainSideDone) break;
+
+					isMainSideDone = true;
+					direction *= -1;
+					i = initIndex;
+				}
 			}
 
-
-			let pivotIndex = isMovingBottom ? lastIndex : firstIndex;
-			{
-				const direction = isMovingBottom ? -1 : 1;
-
-				while (
-					!this.heightCache.has(items[pivotIndex])
-					&& (firstIndex <= pivotIndex && pivotIndex <= lastIndex)
-					&& (0 < pivotIndex && pivotIndex < indexOfLastArrItem)
-				) {
-					pivotIndex += direction;
-				}
+			if (newFirstIndex === null || newLastIndex === null) {
+				throw new Error('Bug! No visible items');
 			}
 
 			return {
 				isInView: true,
-				firstIndex,
-				lastIndex,
-				pivotIndex,
+				firstIndex: newFirstIndex,
+				lastIndex: newLastIndex,
+				pivotIndex: newPivotIndex ?? state.pivotIndex,
 			};
 		});
 	};
