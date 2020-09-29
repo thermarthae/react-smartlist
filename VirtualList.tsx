@@ -226,19 +226,19 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		this.setState((state, { items }) => {
 			if (this.getItemHeight(item.data) === item.height) return null;
 
-			const newNailPoints = [...state.nailPoints];
+			const arrLastIndex = items.length - 1;
+			const newNailPoints = state.nailPoints.slice(0, item.index + 1);
 			this.heightCache.set(item.data, item.height);
 
-			for (let i = item.index; i < newNailPoints.length - 1; i += 1) {
+			for (let i = item.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
 				const height = this.getItemHeight(items[i]);
 
-				newNailPoints[i + 1] = nailPoint + height;
+				newNailPoints.push(nailPoint + height);
 			}
 
-			const lastIndex = newNailPoints.length - 1;
-			const nailPoint = newNailPoints[lastIndex];
-			const height = this.getItemHeight(items[lastIndex]);
+			const nailPoint = newNailPoints[arrLastIndex];
+			const height = this.getItemHeight(items[arrLastIndex]);
 			const listHeight = nailPoint + height;
 
 			let newFirstIndex = state.firstIndex;
@@ -249,7 +249,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			}
 
 			let newLastIndex = state.lastIndex;
-			while (newLastIndex < newNailPoints.length - 1) {
+			while (newLastIndex < arrLastIndex) {
 				const index = newLastIndex + 1;
 				if (!this.getItemVisibility(items[index], newNailPoints[index])) break;
 				newLastIndex = index;
