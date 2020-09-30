@@ -302,8 +302,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 				className={className}
 				style={{
 					position: 'relative',
-					// height: listHeight,
-					paddingBottom: listHeight,
+					height: listHeight,
 				}}
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
