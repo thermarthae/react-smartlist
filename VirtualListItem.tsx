@@ -19,6 +19,7 @@ export type TItemProps<Item extends object = {}, Ref extends HTMLElement = HTMLE
 			position: 'absolute';
 			width: '100%';
 			transform: string;
+			contain: 'content',
 		};
 	};
 };
@@ -100,6 +101,7 @@ class VirtualListItem<C extends React.ElementType, I extends object> extends Rea
 					position: 'absolute',
 					width: '100%',
 					transform: `translateY(${nailPoint}px)`,
+					contain: 'content',
 				},
 			},
 		};
