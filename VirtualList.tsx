@@ -63,18 +63,17 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		this.handleScroll();
 	}
 
-	public getSnapshotBeforeUpdate(prevProps: TProps<I, C>, prevState: TState) {
+	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState) {
 		const { state } = this;
 
 		if (prevState.listHeight !== state.listHeight) {
-			const { items } = prevProps;
 			const { nailPoints, pivotIndex } = prevState;
 			const { rawTopEdge = 0 } = this.lastWindowEdges || {};
 
 			return {
 				index: pivotIndex,
 				offset: rawTopEdge - nailPoints[pivotIndex],
-				height: this.getItemHeight(items[pivotIndex]),
+				height: this.getItemHeight(pivotIndex),
 			} as TAnchor;
 		}
 
@@ -98,14 +97,13 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 	}
 
 	private handleScroll = () => {
-		const edges = this.getWindowEdges();
-		const { isInView } = edges;
+		const { isInView, topEdge } = this.getWindowEdges();
 
 		if (isInView) {
-			this.getVisibleItems(edges);
+			this.getVisibleItems();
 		} else {
 			let dummyPivot = 0;
-			if (edges.topEdge !== 0) dummyPivot = this.props.items.length - 1;
+			if (topEdge !== 0) dummyPivot = this.props.items.length - 1;
 
 			// Bailout if a state doesn't require an update to prevent empty render commit.
 			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
@@ -130,7 +128,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		} = anchor;
 		const { offsetTop } = listEl;
 		const nailPoint = nailPoints[index];
-		const currentHeight = this.getItemHeight(this.props.items[index]);
+		const currentHeight = this.getItemHeight(index);
 
 		const newScrollTop = offsetTop + nailPoint + ((offset - height) + currentHeight);
 		if (newScrollTop <= offsetTop) return;
@@ -168,11 +166,10 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		return edges;
 	};
 
-	private getVisibleItems = (edges: TEdges) => {
+	private getVisibleItems = () => {
 		this.setState((state, { items }) => {
-			const { nailPoints } = state;
 			const indexOfLastArrItem = items.length - 1;
-			const isMovingBottom = edges.scrollDiff >= 0;
+			const isMovingBottom = this.lastWindowEdges?.scrollDiff || 1 >= 0;
 			const initIndex = isMovingBottom ? state.lastIndex : state.firstIndex;
 
 			let isMainSideDone = false;
@@ -191,15 +188,11 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 					i = initIndex;
 				}
 
-				const item = items[i];
-				const nailPoint = nailPoints[i];
-				const isVisible = this.getItemVisibility(item, nailPoint, edges);
-
-				if (isVisible) {
+				if (this.isItemVisible(i)) {
 					if (newFirstIndex === null || i < newFirstIndex) newFirstIndex = i;
 					if (newLastIndex === null || i > newLastIndex) newLastIndex = i;
 
-					if (!newPivotIndex && this.heightCache.has(item)) {
+					if (!newPivotIndex && this.heightCache.has(items[i])) {
 						newPivotIndex = i;
 					}
 				} else if (newFirstIndex !== null) {
@@ -241,26 +234,26 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			for (let i = item.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
-				const height = this.getItemHeight(items[i]);
+				const height = this.getItemHeight(i);
 
 				newNailPoints.push(nailPoint + height);
 			}
 
 			const nailPoint = newNailPoints[arrLastIndex];
-			const height = this.getItemHeight(items[arrLastIndex]);
+			const height = this.getItemHeight(arrLastIndex);
 			const listHeight = nailPoint + height;
 
 			let newFirstIndex = state.firstIndex;
 			while (newFirstIndex > 0) {
 				const index = newFirstIndex - 1;
-				if (!this.getItemVisibility(items[index], newNailPoints[index])) break;
+				if (!this.isItemVisible(index, newNailPoints)) break;
 				newFirstIndex = index;
 			}
 
 			let newLastIndex = state.lastIndex;
 			while (newLastIndex < arrLastIndex) {
 				const index = newLastIndex + 1;
-				if (!this.getItemVisibility(items[index], newNailPoints[index])) break;
+				if (!this.isItemVisible(index, newNailPoints)) break;
 				newLastIndex = index;
 			}
 
@@ -274,16 +267,17 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		});
 	};
 
-	private getItemHeight = (itemData: I) => {
-		return this.heightCache.get(itemData) ?? this.props.estimatedItemHeight;
+	private getItemHeight = (index: number) => {
+		const item = this.props.items[index];
+		return this.heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
-	private getItemVisibility = (item: I, nailPoint: number, edges = this.lastWindowEdges) => {
-		if (!edges) return false;
-		const height = this.getItemHeight(item);
+	private isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
+		const { topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges || {};
+		const nailPoint = nailPoints[index];
+		const height = this.getItemHeight(index);
 
-		const isVisible = (edges.topEdge <= nailPoint + height) && (nailPoint <= edges.bottomEdge);
-		return isVisible;
+		return (topEdge <= nailPoint + height) && (nailPoint <= bottomEdge);
 	};
 
 	public render() {
