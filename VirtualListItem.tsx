@@ -14,11 +14,13 @@ export type TItemProps<Item extends object = {}, Ref extends HTMLElement = HTMLE
 		'data-index': number;
 		'data-measured': boolean;
 		style: {
+			opacity?: number;
+			willChange?: 'transform';
 			position: 'absolute';
 			width: '100%';
-			top: number;
+			transform: string;
 		};
-	}
+	};
 };
 
 type TProps<Component extends React.ElementType, Item extends object = {}> = {
@@ -85,24 +87,24 @@ class VirtualListItem<C extends React.ElementType, I extends object> extends Rea
 			itemIndex,
 		} = this.props;
 
-		return (
-			<Component
-				{...sharedProps}
-				data={itemData}
-				ref={this.itemElRef}
-				rootElProps={{
-					'data-id': itemIndex,
-					'data-measured': itWasMeasured,
-					style: {
-						opacity: itWasMeasured ? undefined : 0.5,
-						willChange: itWasMeasured ? undefined : 'transform',
-						position: 'absolute',
-						width: '100%',
-						transform: `translateY(${nailPoint}px)`,
-					},
-				}}
-			/>
-		);
+		const childProps: TItemProps<I> = {
+			...sharedProps,
+			data: itemData,
+			ref: this.itemElRef,
+			rootElProps: {
+				'data-index': itemIndex,
+				'data-measured': itWasMeasured,
+				style: {
+					opacity: itWasMeasured ? undefined : 0.5,
+					willChange: itWasMeasured ? undefined : 'transform',
+					position: 'absolute',
+					width: '100%',
+					transform: `translateY(${nailPoint}px)`,
+				},
+			},
+		};
+
+		return <Component {...childProps} />;
 	}
 }
 
