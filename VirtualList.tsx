@@ -31,6 +31,7 @@ type TProps<Item, Component extends React.ElementType = React.ElementType> = {
 };
 
 type TState = {
+	HACK_itemHeightChange: number;
 	isInView: boolean;
 	nailPoints: readonly number[];
 	listHeight: number;
@@ -41,6 +42,7 @@ type TState = {
 
 class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState> {
 	public state: TState = {
+		HACK_itemHeightChange: 0,
 		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
 		listHeight: this.props.items.length * this.props.estimatedItemHeight,
@@ -222,13 +224,20 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		});
 	};
 
-	private handleMeasure = (item: { index: number, height: number, data: I }) => {
-		this.setState((state, { items }) => {
-			if (this.getItemHeight(item.data) === item.height) return null;
+	private handleMeasure = (item: { index: number, height: number, data: I; }) => {
+		this.setState((state, { estimatedItemHeight, items }) => {
+			if (this.heightCache.get(item.data) === item.height) return null;
+			this.heightCache.set(item.data, item.height);
+
+			if (item.height === estimatedItemHeight) {
+				return {
+					...state,
+					HACK_itemHeightChange: state.HACK_itemHeightChange + 1,
+				};
+			}
 
 			const arrLastIndex = items.length - 1;
 			const newNailPoints = state.nailPoints.slice(0, item.index + 1);
-			this.heightCache.set(item.data, item.height);
 
 			for (let i = item.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
@@ -256,6 +265,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			}
 
 			return {
+				...state,
 				listHeight,
 				nailPoints: newNailPoints,
 				firstIndex: newFirstIndex,
