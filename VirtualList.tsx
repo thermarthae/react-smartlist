@@ -302,6 +302,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 				className={className}
 				style={{
 					position: 'relative',
+					contain: 'strict',
 					height: listHeight,
 				}}
 			>
