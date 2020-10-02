@@ -55,6 +55,8 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private heightCache = new Map<I, number>();
 
+	private keyCache = new Map<I, TItemID>();
+
 	private lastWindowEdges: TEdges | null = null;
 
 	public componentDidMount() {
@@ -272,6 +274,16 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		return this.heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
+	private getItemKey = (itemData: I) => {
+		const hasKey = this.keyCache.get(itemData);
+		if (hasKey) return hasKey;
+
+		const newKey = this.props.itemKey(itemData);
+		this.keyCache.set(itemData, newKey);
+
+		return newKey;
+	};
+
 	private isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
 		const { topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges || {};
 		const nailPoint = nailPoints[index];
@@ -284,7 +296,6 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		const {
 			component,
 			items,
-			itemKey,
 			className,
 			sharedProps,
 		} = this.props;
@@ -307,7 +318,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 				}}
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
-					const itemID = itemKey(itemData);
+					const itemID = this.getItemKey(itemData);
 					const index = firstIndex + i;
 					return (
 						<VirtualListItem
