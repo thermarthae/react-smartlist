@@ -36,8 +36,8 @@ type TProps<Item, Component extends React.ElementType = React.ElementType> = {
 	sharedProps?: Omit<React.ComponentPropsWithoutRef<Component>, 'data'>;
 };
 
-type TState = {
-	HACK_itemHeightChange: number;
+type TState<Item extends object> = {
+	heightCache: Map<Item, number>;
 	isInView: boolean;
 	nailPoints: readonly number[];
 	listHeight: number;
@@ -46,9 +46,9 @@ type TState = {
 	pivotIndex: number;
 };
 
-class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState> {
-	public state: TState = {
-		HACK_itemHeightChange: 0,
+class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState<I>> {
+	public state: TState<I> = {
+		heightCache: new Map<I, number>(),
 		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
 		listHeight: this.props.items.length * this.props.estimatedItemHeight,
@@ -58,8 +58,6 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 	};
 
 	private listElRef = React.createRef<HTMLDivElement>();
-
-	private heightCache = new Map<I, number>();
 
 	private keyCache = new Map<I, TItemID>();
 
@@ -71,7 +69,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		this.handleScroll();
 	}
 
-	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState) {
+	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>) {
 		const { state } = this;
 
 		if (prevState.listHeight !== state.listHeight) {
@@ -88,7 +86,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		return null;
 	}
 
-	public componentDidUpdate(prevProps: TProps<I, C>, _prevState: TState, snapshot?: TAnchor) {
+	public componentDidUpdate(prevProps: TProps<I, C>, _prevState: TState<I>, snapshot?: TAnchor) {
 		const { props } = this;
 		if (prevProps.items !== props.items) {
 			this.handleScroll();
@@ -200,7 +198,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 					if (newFirstIndex === null || i < newFirstIndex) newFirstIndex = i;
 					if (newLastIndex === null || i > newLastIndex) newLastIndex = i;
 
-					if (!newPivotIndex && this.heightCache.has(items[i])) {
+					if (!newPivotIndex && state.heightCache.has(items[i])) {
 						newPivotIndex = i;
 					}
 				} else if (newFirstIndex !== null) {
@@ -227,14 +225,13 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private handleMeasure = (entry: TEntry<I>) => {
 		this.setState((state, { estimatedItemHeight, items }) => {
-			if (this.heightCache.get(entry.data) === entry.height) return null;
-			this.heightCache.set(entry.data, entry.height);
+			if (state.heightCache.get(entry.data) === entry.height) return null;
+
+			const heightCache = new Map(state.heightCache);
+			heightCache.set(entry.data, entry.height);
 
 			if (entry.height === estimatedItemHeight) {
-				return {
-					...state,
-					HACK_itemHeightChange: state.HACK_itemHeightChange + 1,
-				};
+				return { ...state, heightCache };
 			}
 
 			const arrLastIndex = items.length - 1;
@@ -267,6 +264,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 			return {
 				...state,
+				heightCache,
 				listHeight,
 				nailPoints: newNailPoints,
 				firstIndex: newFirstIndex,
@@ -277,7 +275,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 
 	private getItemHeight = (index: number) => {
 		const item = this.props.items[index];
-		return this.heightCache.get(item) ?? this.props.estimatedItemHeight;
+		return this.state.heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
 	private getItemKey = (itemData: I) => {
@@ -306,6 +304,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			sharedProps,
 		} = this.props;
 		const {
+			heightCache,
 			isInView,
 			firstIndex,
 			lastIndex,
@@ -332,7 +331,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 							itemIndex={index}
 							component={component}
 							itemData={itemData}
-							itWasMeasured={this.heightCache.has(itemData)}
+							itWasMeasured={heightCache.has(itemData)}
 							nailPoint={nailPoints[index]}
 							onMeasure={this.handleMeasure}
 							sharedProps={sharedProps}
