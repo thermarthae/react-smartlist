@@ -18,6 +18,12 @@ type TAnchor = {
 	height: number;
 };
 
+export type TEntry<Item> = {
+	index: number;
+	height: number;
+	data: Item;
+};
+
 //
 
 type TProps<Item, Component extends React.ElementType = React.ElementType> = {
@@ -219,12 +225,12 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		});
 	};
 
-	private handleMeasure = (item: { index: number, height: number, data: I; }) => {
+	private handleMeasure = (entry: TEntry<I>) => {
 		this.setState((state, { estimatedItemHeight, items }) => {
-			if (this.heightCache.get(item.data) === item.height) return null;
-			this.heightCache.set(item.data, item.height);
+			if (this.heightCache.get(entry.data) === entry.height) return null;
+			this.heightCache.set(entry.data, entry.height);
 
-			if (item.height === estimatedItemHeight) {
+			if (entry.height === estimatedItemHeight) {
 				return {
 					...state,
 					HACK_itemHeightChange: state.HACK_itemHeightChange + 1,
@@ -232,9 +238,9 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 			}
 
 			const arrLastIndex = items.length - 1;
-			const newNailPoints = state.nailPoints.slice(0, item.index + 1);
+			const newNailPoints = state.nailPoints.slice(0, entry.index + 1);
 
-			for (let i = item.index; i < arrLastIndex; i += 1) {
+			for (let i = entry.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
 				const height = this.getItemHeight(i);
 

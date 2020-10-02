@@ -7,6 +7,8 @@ import {
 	unstable_LowPriority as LowPriority,
 } from 'scheduler';
 
+import { TEntry } from './VirtualList';
+
 export type TItemProps<Item extends object = {}, Ref extends HTMLElement = HTMLElement> = {
 	ref: React.Ref<Ref>;
 	data: Item;
@@ -30,7 +32,7 @@ type TProps<Component extends React.ElementType, Item extends object = {}> = {
 	itemIndex: number;
 	nailPoint: number;
 	itWasMeasured: boolean;
-	onMeasure: (item: { index: number, height: number, data: Item }) => void;
+	onMeasure: (item: TEntry<Item>) => void;
 	sharedProps?: Omit<React.ComponentPropsWithoutRef<Component>, 'data'>;
 };
 
