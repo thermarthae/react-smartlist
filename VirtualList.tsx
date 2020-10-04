@@ -37,6 +37,8 @@ type TProps<Item, Component extends React.ElementType = React.ElementType> = {
 };
 
 type TState<Item extends object> = {
+	/** @ignore */
+	memoizedItemsArray: readonly Item[];
 	heightCache: Map<Item, number>;
 	isInView: boolean;
 	nailPoints: readonly number[];
@@ -47,7 +49,35 @@ type TState<Item extends object> = {
 };
 
 class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState<I>> {
+	public static getDerivedStateFromProps(props: TProps<any>, state: TState<any>): Partial<TState<any>> | null {
+		if (props.items !== state.memoizedItemsArray) {
+			const { items, estimatedItemHeight } = props;
+			const { heightCache } = state;
+			const arrLastIndex = items.length - 1;
+			const nailPoints = [0];
+
+			for (let i = 0; i < arrLastIndex; i += 1) {
+				const nailPoint = nailPoints[i];
+				const height = heightCache.get(items[i]) ?? estimatedItemHeight;
+
+				nailPoints.push(nailPoint + height);
+			}
+
+			const nailPoint = nailPoints[arrLastIndex];
+			const height = heightCache.get(items[arrLastIndex]) ?? estimatedItemHeight;
+			const listHeight = nailPoint + height;
+
+			return {
+				memoizedItemsArray: items,
+				nailPoints,
+				listHeight,
+			};
+		}
+		return null;
+	}
+
 	public state: TState<I> = {
+		memoizedItemsArray: this.props.items,
 		heightCache: new Map<I, number>(),
 		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
