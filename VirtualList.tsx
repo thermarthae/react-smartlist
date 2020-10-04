@@ -1,4 +1,8 @@
-import React from 'react';
+import React, {
+	ElementType,
+	PureComponent,
+	createRef,
+} from 'react';
 
 import VirtualListItem from './VirtualListItem';
 
@@ -26,8 +30,8 @@ export type TEntry<Item> = {
 
 //
 
-type TProps<Item, Component extends React.ElementType = React.ElementType> = {
-	component: React.ElementType;
+type TProps<Item, Component extends ElementType = ElementType> = {
+	component: ElementType;
 	items: readonly Item[];
 	estimatedItemHeight: number;
 	itemKey: (item: Item) => TItemID;
@@ -48,7 +52,7 @@ type TState<Item extends object> = {
 	pivotIndex: number;
 };
 
-class VirtualList<I extends object, C extends React.ElementType> extends React.PureComponent<TProps<I, C>, TState<I>> {
+class VirtualList<I extends object, C extends ElementType> extends PureComponent<TProps<I, C>, TState<I>> {
 	public static getDerivedStateFromProps(props: TProps<any>, state: TState<any>): Partial<TState<any>> | null {
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight } = props;
@@ -87,7 +91,7 @@ class VirtualList<I extends object, C extends React.ElementType> extends React.P
 		pivotIndex: 0,
 	};
 
-	private listElRef = React.createRef<HTMLDivElement>();
+	private listElRef = createRef<HTMLDivElement>();
 
 	private keyCache = new Map<I, TItemID>();
 
