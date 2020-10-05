@@ -273,13 +273,13 @@ class VirtualList<I extends object, C extends ElementType> extends PureComponent
 
 			for (let i = entry.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
-				const height = this.getItemHeight(i);
+				const height = this.getItemHeight(i, heightCache);
 
 				newNailPoints.push(nailPoint + height);
 			}
 
 			const nailPoint = newNailPoints[arrLastIndex];
-			const height = this.getItemHeight(arrLastIndex);
+			const height = this.getItemHeight(arrLastIndex, heightCache);
 			const listHeight = nailPoint + height;
 
 			let newFirstIndex = state.firstIndex;
@@ -307,9 +307,9 @@ class VirtualList<I extends object, C extends ElementType> extends PureComponent
 		});
 	};
 
-	private getItemHeight = (index: number) => {
+	private getItemHeight = (index: number, heightCache = this.state.heightCache) => {
 		const item = this.props.items[index];
-		return this.state.heightCache.get(item) ?? this.props.estimatedItemHeight;
+		return heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
 	private getItemKey = (itemData: I) => {
