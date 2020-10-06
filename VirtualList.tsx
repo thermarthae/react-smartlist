@@ -31,13 +31,13 @@ export type TEntry<Item> = {
 //
 
 type TProps<I extends object = {}, C extends ElementType = ElementType> = {
-	component: ElementType;
+	component: C;
 	items: readonly I[];
 	estimatedItemHeight: number;
 	itemKey: (item: I) => TItemID;
 	overscanPadding?: number;
 	className?: string;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data'>;
+	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data' | 'rootElProps' | 'children'>;
 };
 
 type TState<I extends object = {}> = {

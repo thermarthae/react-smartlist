@@ -29,13 +29,13 @@ export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = H
 };
 
 type TProps<I extends object = {}, C extends ElementType = ElementType> = {
-	component: React.ElementType;
+	component: C;
 	itemData: I;
 	itemIndex: number;
 	nailPoint: number;
 	itWasMeasured: boolean;
 	onMeasure: (item: TEntry<I>) => void;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data'>;
+	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data' | 'rootElProps' | 'children'>;
 };
 
 class VirtualListItem<I extends object, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
