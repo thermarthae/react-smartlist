@@ -1,5 +1,6 @@
 import React, {
 	ElementType,
+	createElement,
 } from 'react';
 import {
 	CallbackNode,
@@ -84,33 +85,35 @@ class VirtualListItem<I extends object, C extends ElementType> extends React.Pur
 
 	public render() {
 		const {
-			component: Component,
+			component,
+			itemID,
 			itemData,
-			sharedProps = {},
+			sharedProps,
 			itWasMeasured,
 			nailPoint,
 			itemIndex,
 		} = this.props;
 
-		const childProps: TItemProps<I> = {
-			...sharedProps,
-			data: itemData,
-			ref: this.itemElRef,
-			rootElProps: {
-				'data-index': itemIndex,
-				'data-measured': itWasMeasured,
-				style: {
-					opacity: itWasMeasured ? undefined : 0.5,
-					willChange: itWasMeasured ? undefined : 'transform',
-					position: 'absolute',
-					width: '100%',
-					transform: `translateY(${nailPoint}px)`,
-					contain: 'content',
+		return createElement(
+			component,
+			{
+				...(sharedProps || {}),
+				data: itemData,
+				ref: this.itemElRef,
+				rootElProps: {
+					'data-index': itemIndex,
+					'data-measured': itWasMeasured,
+					style: {
+						opacity: itWasMeasured ? undefined : 0.5,
+						willChange: itWasMeasured ? undefined : 'transform',
+						position: 'absolute',
+						width: '100%',
+						transform: `translateY(${nailPoint}px)`,
+						contain: 'content',
+					},
 				},
-			},
-		};
-
-		return <Component {...childProps} />;
+			} as TChildrenProps<I>,
+		);
 	}
 }
 
