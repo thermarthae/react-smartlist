@@ -30,20 +30,20 @@ export type TEntry<Item> = {
 
 //
 
-type TProps<Item, Component extends ElementType = ElementType> = {
+type TProps<I extends object = {}, C extends ElementType = ElementType> = {
 	component: ElementType;
-	items: readonly Item[];
+	items: readonly I[];
 	estimatedItemHeight: number;
-	itemKey: (item: Item) => TItemID;
+	itemKey: (item: I) => TItemID;
 	overscanPadding?: number;
 	className?: string;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<Component>, 'data'>;
+	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data'>;
 };
 
-type TState<Item extends object> = {
+type TState<I extends object = {}> = {
 	/** @ignore */
-	memoizedItemsArray: readonly Item[];
-	heightCache: Map<Item, number>;
+	memoizedItemsArray: readonly I[];
+	heightCache: Map<I, number>;
 	isInView: boolean;
 	nailPoints: readonly number[];
 	listHeight: number;
@@ -53,7 +53,7 @@ type TState<Item extends object> = {
 };
 
 class VirtualList<I extends object, C extends ElementType> extends PureComponent<TProps<I, C>, TState<I>> {
-	public static getDerivedStateFromProps(props: TProps<any>, state: TState<any>): Partial<TState<any>> | null {
+	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight } = props;
 			const { heightCache } = state;

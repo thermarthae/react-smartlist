@@ -1,4 +1,6 @@
-import React from 'react';
+import React, {
+	ElementType,
+} from 'react';
 import {
 	CallbackNode,
 	unstable_scheduleCallback as scheduleCallback,
@@ -26,17 +28,17 @@ export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = H
 	};
 };
 
-type TProps<Component extends React.ElementType, Item extends object = {}> = {
+type TProps<I extends object = {}, C extends ElementType = ElementType> = {
 	component: React.ElementType;
-	itemData: Item;
+	itemData: I;
 	itemIndex: number;
 	nailPoint: number;
 	itWasMeasured: boolean;
-	onMeasure: (item: TEntry<Item>) => void;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<Component>, 'data'>;
+	onMeasure: (item: TEntry<I>) => void;
+	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data'>;
 };
 
-class VirtualListItem<C extends React.ElementType, I extends object> extends React.PureComponent<TProps<C, I>> {
+class VirtualListItem<I extends object, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
 	private itemElRef = React.createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
