@@ -9,7 +9,7 @@ import {
 
 import { TEntry } from './VirtualList';
 
-export type TItemProps<Item extends object = {}, Ref extends HTMLElement = HTMLElement> = {
+export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = HTMLElement> = {
 	ref: React.Ref<Ref>;
 	data: Item;
 	rootElProps: {
