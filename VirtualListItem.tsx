@@ -86,7 +86,6 @@ class VirtualListItem<I extends object, C extends ElementType> extends React.Pur
 	public render() {
 		const {
 			component,
-			itemID,
 			itemData,
 			sharedProps,
 			itWasMeasured,
