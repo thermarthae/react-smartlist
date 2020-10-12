@@ -14,7 +14,7 @@ import { TEntry } from './VirtualList';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
-	ref: React.Ref<Ref>;
+	innerRef: React.Ref<Ref>;
 	data: Item;
 	rootElProps: {
 		'data-index': number;
@@ -99,7 +99,7 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 			{
 				...(sharedProps || {}),
 				data: itemData,
-				ref: this.itemElRef,
+				innerRef: this.itemElRef,
 				rootElProps: {
 					'data-index': itemIndex,
 					'data-measured': itWasMeasured,
