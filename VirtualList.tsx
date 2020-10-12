@@ -38,6 +38,7 @@ export type TProps<I = {}, C extends ElementType = ElementType> = {
 	overscanPadding?: number;
 	className?: string;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
+	initState?: Partial<TState<I>>
 };
 
 type TState<I = {}> = {
@@ -89,6 +90,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		firstIndex: 0,
 		lastIndex: 0,
 		pivotIndex: 0,
+		...this.props.initState,
 	};
 
 	private listElRef = createRef<HTMLDivElement>();
