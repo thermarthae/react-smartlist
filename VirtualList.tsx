@@ -121,8 +121,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	}
 
 	public componentDidUpdate(prevProps: TProps<I, C>, _prevState: TState<I>, snapshot?: TAnchor) {
-		const { props } = this;
-		if (prevProps.items !== props.items) {
+		if (prevProps !== this.props) {
 			this.handleScroll();
 		}
 
