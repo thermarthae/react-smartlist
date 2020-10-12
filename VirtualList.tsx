@@ -353,6 +353,7 @@ class VirtualList<I extends object, C extends ElementType> extends PureComponent
 				style={{
 					position: 'relative',
 					contain: 'strict',
+					width: '100%',
 					height: listHeight,
 				}}
 			>
