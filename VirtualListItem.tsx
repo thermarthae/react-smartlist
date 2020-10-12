@@ -13,7 +13,7 @@ import {
 import { TEntry } from './VirtualList';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = HTMLElement> = {
+export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
 	ref: React.Ref<Ref>;
 	data: Item;
 	rootElProps: {
@@ -30,7 +30,7 @@ export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = H
 	};
 };
 
-type TProps<I extends object = {}, C extends ElementType = ElementType> = {
+type TProps<I = {}, C extends ElementType = ElementType> = {
 	component: C;
 	itemData: I;
 	itemIndex: number;
@@ -40,7 +40,7 @@ type TProps<I extends object = {}, C extends ElementType = ElementType> = {
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 };
 
-class VirtualListItem<I extends object, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
+class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
 	private itemElRef = React.createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
