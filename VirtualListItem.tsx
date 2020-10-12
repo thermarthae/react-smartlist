@@ -12,6 +12,7 @@ import {
 
 import { TEntry } from './VirtualList';
 
+export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item extends object = {}, Ref extends HTMLElement = HTMLElement> = {
 	ref: React.Ref<Ref>;
 	data: Item;
@@ -36,7 +37,7 @@ type TProps<I extends object = {}, C extends ElementType = ElementType> = {
 	nailPoint: number;
 	itWasMeasured: boolean;
 	onMeasure: (item: TEntry<I>) => void;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data' | 'rootElProps' | 'children'>;
+	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 };
 
 class VirtualListItem<I extends object, C extends ElementType> extends React.PureComponent<TProps<I, C>> {

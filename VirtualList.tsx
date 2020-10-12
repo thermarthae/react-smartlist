@@ -4,7 +4,7 @@ import React, {
 	createRef,
 } from 'react';
 
-import VirtualListItem from './VirtualListItem';
+import VirtualListItem, { TSharedProps } from './VirtualListItem';
 
 type TItemID = string | number;
 
@@ -37,7 +37,7 @@ type TProps<I extends object = {}, C extends ElementType = ElementType> = {
 	itemKey: (item: I) => TItemID;
 	overscanPadding?: number;
 	className?: string;
-	sharedProps?: Omit<React.ComponentPropsWithoutRef<C>, 'data' | 'rootElProps' | 'children'>;
+	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 };
 
 type TState<I extends object = {}> = {
