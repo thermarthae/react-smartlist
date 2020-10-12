@@ -209,18 +209,18 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	private getVisibleItems = () => {
 		this.setState((state, { items }) => {
 			const indexOfLastArrItem = items.length - 1;
-			const isMovingBottom = this.lastWindowEdges?.scrollDiff || 1 >= 0;
-			const initIndex = isMovingBottom ? state.lastIndex : state.firstIndex;
+			const initIndex = state.lastIndex;
 
 			let isMainSideDone = false;
-			let direction = isMovingBottom ? 1 : -1;
+			let isVisible = false;
+			let direction: 1 | -1 = 1;
 
-			let newFirstIndex: null | number = null;
-			let newLastIndex: null | number = null;
-			let newPivotIndex: null | number = null;
+			let firstIndex: null | number = null;
+			let lastIndex: null | number = null;
+			let pivotIndex: null | number = null;
 
 			for (let i = initIndex; true; i += direction) { // eslint-disable-line no-constant-condition
-				if (i < 0 || indexOfLastArrItem < i) {
+				if (i < 0 || indexOfLastArrItem < i || (!isVisible && firstIndex !== null)) {
 					if (isMainSideDone) break;
 
 					isMainSideDone = true;
@@ -228,31 +228,26 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 					i = initIndex;
 				}
 
-				if (this.isItemVisible(i)) {
-					if (newFirstIndex === null || i < newFirstIndex) newFirstIndex = i;
-					if (newLastIndex === null || i > newLastIndex) newLastIndex = i;
+				isVisible = this.isItemVisible(i);
+				if (isVisible) {
+					if (firstIndex === null || i < firstIndex) firstIndex = i;
+					if (lastIndex === null || i > lastIndex) lastIndex = i;
 
-					if (!newPivotIndex && state.heightCache.has(items[i])) {
-						newPivotIndex = i;
+					if (!pivotIndex && state.heightCache.has(items[i])) {
+						pivotIndex = i;
 					}
-				} else if (newFirstIndex !== null) {
-					if (isMainSideDone) break;
-
-					isMainSideDone = true;
-					direction *= -1;
-					i = initIndex;
 				}
 			}
 
-			if (newFirstIndex === null || newLastIndex === null) {
+			if (firstIndex === null || lastIndex === null) {
 				throw new Error('Bug! No visible items');
 			}
 
 			return {
 				isInView: true,
-				firstIndex: newFirstIndex,
-				lastIndex: newLastIndex,
-				pivotIndex: newPivotIndex ?? state.pivotIndex,
+				firstIndex,
+				lastIndex,
+				pivotIndex: pivotIndex ?? state.pivotIndex,
 			};
 		});
 	};
