@@ -16,12 +16,11 @@ export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
 	innerRef: React.Ref<Ref>;
 	data: Item;
+	itWasMeasured: boolean;
 	rootElProps: {
 		'data-index': number;
 		'data-measured': boolean;
 		style: {
-			opacity?: number;
-			willChange?: 'transform';
 			position: 'absolute';
 			width: '100%';
 			transform: string;
@@ -100,12 +99,11 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 				...(sharedProps || {}),
 				data: itemData,
 				innerRef: this.itemElRef,
+				itWasMeasured,
 				rootElProps: {
 					'data-index': itemIndex,
 					'data-measured': itWasMeasured,
 					style: {
-						opacity: itWasMeasured ? undefined : 0.5,
-						willChange: itWasMeasured ? undefined : 'transform',
 						position: 'absolute',
 						width: '100%',
 						transform: `translateY(${nailPoint}px)`,
