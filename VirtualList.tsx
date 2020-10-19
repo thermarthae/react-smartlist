@@ -38,7 +38,7 @@ export type TProps<I = {}, C extends ElementType = ElementType> = {
 	overscanPadding?: number;
 	className?: string;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
-	initState?: Partial<TState<I>>
+	initState?: Partial<TState<I>>;
 };
 
 type TState<I = {}> = {
