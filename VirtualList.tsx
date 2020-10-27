@@ -254,15 +254,11 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	};
 
 	private handleMeasure = (entry: TEntry<I>) => {
-		this.setState((state, { estimatedItemHeight, items }) => {
+		this.setState((state, { items }) => {
 			if (state.heightCache.get(entry.data) === entry.height) return null;
 
 			const heightCache = new Map(state.heightCache);
 			heightCache.set(entry.data, entry.height);
-
-			if (entry.height === estimatedItemHeight) {
-				return { ...state, heightCache };
-			}
 
 			const arrLastIndex = items.length - 1;
 			const newNailPoints = state.nailPoints.slice(0, entry.index + 1);
