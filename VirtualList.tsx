@@ -45,6 +45,7 @@ type TState<I = {}> = {
 	/** @ignore */
 	memoizedItemsArray: readonly I[];
 	heightCache: Map<I, number>;
+	heightCacheVersion: number;
 	isInView: boolean;
 	nailPoints: readonly number[];
 	listHeight: number;
@@ -84,6 +85,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	public state: TState<I> = {
 		memoizedItemsArray: this.props.items,
 		heightCache: new Map<I, number>(),
+		heightCacheVersion: 0,
 		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
 		listHeight: this.props.items.length * this.props.estimatedItemHeight,
@@ -257,21 +259,25 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		this.setState((state, { items }) => {
 			if (state.heightCache.get(entry.data) === entry.height) return null;
 
-			const heightCache = new Map(state.heightCache);
-			heightCache.set(entry.data, entry.height);
+			// To update the height of an item, we are *mutating* the `heightCache` map.
+			// Unluckily, React will not detect our direct change.
+			// To let him know about the change, we are just bumping a dummy `heightCacheVersion` state.
+			// We could create a new map, but bumping is more performant - O(1) vs. O(n).
+			state.heightCache.set(entry.data, entry.height);
+			const heightCacheVersion = state.heightCacheVersion + 1;
 
 			const arrLastIndex = items.length - 1;
 			const newNailPoints = state.nailPoints.slice(0, entry.index + 1);
 
 			for (let i = entry.index; i < arrLastIndex; i += 1) {
 				const nailPoint = newNailPoints[i];
-				const height = this.getItemHeight(i, heightCache);
+				const height = this.getItemHeight(i);
 
 				newNailPoints.push(nailPoint + height);
 			}
 
 			const nailPoint = newNailPoints[arrLastIndex];
-			const height = this.getItemHeight(arrLastIndex, heightCache);
+			const height = this.getItemHeight(arrLastIndex);
 			const listHeight = nailPoint + height;
 
 			let newFirstIndex = state.firstIndex;
@@ -290,7 +296,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 
 			return {
 				...state,
-				heightCache,
+				heightCacheVersion,
 				listHeight,
 				nailPoints: newNailPoints,
 				firstIndex: newFirstIndex,
@@ -299,9 +305,9 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		});
 	};
 
-	private getItemHeight = (index: number, heightCache = this.state.heightCache) => {
+	private getItemHeight = (index: number) => {
 		const item = this.props.items[index];
-		return heightCache.get(item) ?? this.props.estimatedItemHeight;
+		return this.state.heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
 	private getItemKey = (itemData: I) => {
