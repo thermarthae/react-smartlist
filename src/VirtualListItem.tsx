@@ -24,7 +24,7 @@ export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
 			position: 'absolute';
 			width: '100%';
 			transform: string;
-			contain: 'content',
+			contain: 'content';
 		};
 	};
 };
@@ -40,7 +40,7 @@ type TProps<I = {}, C extends ElementType = ElementType> = {
 };
 
 class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
-	private itemElRef = React.createRef<HTMLElement>();
+	private readonly itemElRef = React.createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
 
@@ -54,8 +54,8 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 		this.detachResizeObserver();
 	}
 
-	private attachResizeObserver = () => {
-		const priority = !this.props.itWasMeasured ? UserBlockingPriority : LowPriority;
+	private readonly attachResizeObserver = () => {
+		const priority = this.props.itWasMeasured ? LowPriority : UserBlockingPriority;
 		this.scheduledObserver = scheduleCallback(priority, () => {
 			if (!this.itemElRef.current) return;
 			this.resizeObserver = new ResizeObserver(this.measureHeight);
@@ -63,19 +63,20 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 		});
 	};
 
-	private detachResizeObserver = () => {
+	private readonly detachResizeObserver = () => {
 		if (this.scheduledObserver) cancelCallback(this.scheduledObserver);
 		this.resizeObserver?.disconnect();
 		this.resizeObserver = null;
 	};
 
-	private measureHeight: ResizeObserverCallback = ([entry]) => {
+	private readonly measureHeight: ResizeObserverCallback = ([entry]) => {
 		const { onMeasure, itemIndex, itemData } = this.props;
 
-		const height = entry.borderBoxSize[0].blockSize;
+		const height = entry.borderBoxSize?.[0].blockSize ?? 0;
 		if (height === 0) {
 			return;
 		}
+
 		onMeasure({
 			index: itemIndex,
 			data: itemData,
@@ -96,7 +97,7 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 		return createElement(
 			component,
 			{
-				...(sharedProps || {}),
+				...(sharedProps ?? {}),
 				data: itemData,
 				innerRef: this.itemElRef,
 				itWasMeasured,

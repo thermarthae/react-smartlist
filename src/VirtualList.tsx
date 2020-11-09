@@ -30,7 +30,7 @@ export type TEntry<Item> = {
 
 //
 
-export type TProps<I = {}, C extends ElementType = ElementType> = {
+export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	component: C;
 	items: readonly I[];
 	estimatedItemHeight: number;
@@ -41,7 +41,7 @@ export type TProps<I = {}, C extends ElementType = ElementType> = {
 	initState?: Partial<TState<I>>;
 };
 
-type TState<I = {}> = {
+type TState<I = unknown> = {
 	/** @ignore */
 	memoizedItemsArray: readonly I[];
 	heightCache: Map<I, number>;
@@ -79,6 +79,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				listHeight,
 			};
 		}
+
 		return null;
 	}
 
@@ -95,9 +96,9 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		...this.props.initState,
 	};
 
-	private listElRef = createRef<HTMLDivElement>();
+	private readonly listElRef = createRef<HTMLDivElement>();
 
-	private keyCache = new Map<I, TItemID>();
+	private readonly keyCache = new Map<I, TItemID>();
 
 	private lastWindowEdges: TEdges | null = null;
 
@@ -107,18 +108,18 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		this.handleScroll();
 	}
 
-	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>) {
+	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>): TAnchor | null {
 		const { state } = this;
 
 		if (prevState.listHeight !== state.listHeight) {
 			const { nailPoints, pivotIndex } = prevState;
-			const { rawTopEdge = 0 } = this.lastWindowEdges || {};
+			const { rawTopEdge = 0 } = this.lastWindowEdges ?? {};
 
 			return {
 				index: pivotIndex,
 				offset: rawTopEdge - nailPoints[pivotIndex],
 				height: this.getItemHeight(pivotIndex),
-			} as TAnchor;
+			};
 		}
 
 		return null;
@@ -139,7 +140,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		window.removeEventListener('resize', this.handleScroll);
 	}
 
-	private handleScroll = () => {
+	private readonly handleScroll = () => {
 		const { isInView, topEdge } = this.getWindowEdges();
 
 		if (isInView) {
@@ -150,7 +151,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 
 			// Bailout if a state doesn't require an update to prevent empty render commit.
 			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-			if (this.state.pivotIndex === dummyPivot && this.state.isInView === false) return;
+			if (this.state.pivotIndex === dummyPivot && !this.state.isInView) return;
 
 			this.setState({
 				isInView: false,
@@ -159,7 +160,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		}
 	};
 
-	private handleListHeightChange = (anchor: TAnchor) => {
+	private readonly handleListHeightChange = (anchor: TAnchor) => {
 		const listEl = this.listElRef.current;
 		if (!listEl) return;
 
@@ -179,7 +180,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		document.documentElement.scrollTop = newScrollTop;
 	};
 
-	private getWindowEdges = (): TEdges => {
+	private readonly getWindowEdges = (): TEdges => {
 		if (!this.listElRef.current) throw new Error('Bug! No list ref');
 		const { offsetTop, scrollHeight } = this.listElRef.current;
 		const {
@@ -195,7 +196,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		const bottomEdge = overscanedBottomEdge > 0 ? Math.min(scrollHeight, overscanedBottomEdge) : 0;
 		const topEdge = overscanedTopEdge > 0 ? Math.min(overscanedTopEdge, bottomEdge) : 0;
 
-		const scrollDiff = rawTopEdge - (this.lastWindowEdges?.rawTopEdge || rawTopEdge);
+		const scrollDiff = rawTopEdge - (this.lastWindowEdges?.rawTopEdge ?? rawTopEdge);
 
 		const edges = {
 			bottomEdge,
@@ -209,7 +210,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		return edges;
 	};
 
-	private getVisibleItems = () => {
+	private readonly getVisibleItems = () => {
 		this.setState((state, { items }) => {
 			const indexOfLastArrItem = items.length - 1;
 			const initIndex = state.lastIndex;
@@ -222,7 +223,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 			let lastIndex: null | number = null;
 			let pivotIndex: null | number = null;
 
-			for (let i = initIndex; true; i += direction) { // eslint-disable-line no-constant-condition
+			for (let i = initIndex; true; i += direction) {
 				if (i < 0 || indexOfLastArrItem < i || (!isVisible && firstIndex !== null)) {
 					if (isMainSideDone) break;
 
@@ -255,7 +256,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		});
 	};
 
-	private handleMeasure = (entry: TEntry<I>) => {
+	private readonly handleMeasure = (entry: TEntry<I>) => {
 		this.setState((state, { items }) => {
 			if (state.heightCache.get(entry.data) === entry.height) return null;
 
@@ -305,12 +306,12 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		});
 	};
 
-	private getItemHeight = (index: number) => {
+	private readonly getItemHeight = (index: number) => {
 		const item = this.props.items[index];
 		return this.state.heightCache.get(item) ?? this.props.estimatedItemHeight;
 	};
 
-	private getItemKey = (itemData: I) => {
+	private readonly getItemKey = (itemData: I) => {
 		const hasKey = this.keyCache.get(itemData);
 		if (hasKey) return hasKey;
 
@@ -320,8 +321,8 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		return newKey;
 	};
 
-	private isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
-		const { topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges || {};
+	private readonly isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
+		const { topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges ?? {};
 		const nailPoint = nailPoints[index];
 		const height = this.getItemHeight(index);
 
@@ -366,8 +367,8 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 							itemData={itemData}
 							itWasMeasured={heightCache.has(itemData)}
 							nailPoint={nailPoints[index]}
-							onMeasure={this.handleMeasure}
 							sharedProps={sharedProps}
+							onMeasure={this.handleMeasure}
 						/>
 					);
 				})}

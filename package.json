@@ -1,0 +1,71 @@
+{
+	"name": "react-smartlist",
+	"version": "0.0.1",
+	"license": "MIT",
+	"author": "thermarthae <thermarthae@protonmail.com>",
+	"source": "src/index.ts",
+	"main": "dist/index.js",
+	"module": "dist/index.esm.js",
+	"esmodule": "dist/index.modern.js",
+	"umd:main": "dist/index.umd.js",
+	"types": "dist/index.d.ts",
+	"sideEffects": false,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thermarthae/react-smartlist.git"
+	},
+	"bugs": {
+		"url": "https://github.com/thermarthae/react-smartlist/issues"
+	},
+	"engines": {
+		"node": ">10.0.0"
+	},
+	"keywords": [
+		"react",
+		"virtual",
+		"virtualized",
+		"list",
+		"smartlist",
+		"infinite"
+	],
+	"scripts": {
+		"build": "microbundle --jsx React.createElement --no-compress"
+	},
+	"dependencies": {
+		"scheduler": "^0.20.1"
+	},
+	"peerDependencies": {
+		"@types/react": "^16.9.55",
+		"react": "^16.8.0 || ^17.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@types/react": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@babel/core": "^7.12.3",
+		"@babel/plugin-proposal-class-properties": "^7.12.1",
+		"@babel/preset-env": "^7.12.1",
+		"@babel/preset-react": "^7.12.5",
+		"@babel/preset-typescript": "^7.12.1",
+		"@types/node": "^14.14.6",
+		"@types/react": "^16.9.55",
+		"@types/react-dom": "^16.9.9",
+		"@types/resize-observer-browser": "^0.1.4",
+		"@types/scheduler": "^0.16.1",
+		"@typescript-eslint/eslint-plugin": "^4.6.1",
+		"@typescript-eslint/parser": "^4.4.1",
+		"cross-env": "^7.0.2",
+		"eslint": "^7.13.0",
+		"eslint-config-xo": "^0.33.1",
+		"eslint-config-xo-react": "^0.23.0",
+		"eslint-config-xo-typescript": "^0.35.0",
+		"eslint-plugin-react": "^7.21.5",
+		"eslint-plugin-react-hooks": "^4.2.0",
+		"microbundle": "^0.12.4",
+		"react": "^17.0.1",
+		"react-dom": "^17.0.1",
+		"typescript": "^4.0.5"
+	}
+}
