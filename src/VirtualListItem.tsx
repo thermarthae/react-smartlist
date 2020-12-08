@@ -13,7 +13,7 @@ import {
 import { TEntry } from './VirtualList';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
+export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement> = {
 	innerRef: React.Ref<Ref>;
 	data: Item;
 	itWasMeasured: boolean;
@@ -29,7 +29,7 @@ export type TChildrenProps<Item = {}, Ref extends HTMLElement = HTMLElement> = {
 	};
 };
 
-type TProps<I = {}, C extends ElementType = ElementType> = {
+type TProps<I = unknown, C extends ElementType = ElementType> = {
 	component: C;
 	itemData: I;
 	itemIndex: number;

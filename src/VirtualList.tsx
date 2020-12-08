@@ -223,6 +223,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 			let lastIndex: null | number = null;
 			let pivotIndex: null | number = null;
 
+			// eslint-disable-next-line no-constant-condition
 			for (let i = initIndex; true; i += direction) {
 				if (i < 0 || indexOfLastArrItem < i || (!isVisible && firstIndex !== null)) {
 					if (isMainSideDone) break;
