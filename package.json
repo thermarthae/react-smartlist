@@ -41,7 +41,7 @@
 		"scheduler": "^0.20.1"
 	},
 	"peerDependencies": {
-		"@types/react": "^16.9.55",
+		"@types/react": "*",
 		"react": "^16.8.0 || ^17.0.0"
 	},
 	"peerDependenciesMeta": {
