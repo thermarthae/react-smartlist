@@ -78,6 +78,10 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				nailPoints,
 				listHeight,
 				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
+				// Fix indexes when out of bounds:
+				firstIndex: Math.min(items.length, state.firstIndex),
+				lastIndex: Math.min(items.length, state.lastIndex),
+				pivotIndex: Math.min(items.length, state.pivotIndex),
 			};
 		}
 
