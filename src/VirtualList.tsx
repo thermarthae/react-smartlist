@@ -59,7 +59,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight } = props;
 			const { heightCache } = state;
-			const arrLastIndex = items.length - 1;
+			const arrLastIndex = Math.max(0, items.length - 1); // HACK: `items` may be empty!
 			const nailPoints = [0];
 
 			for (let i = 0; i < arrLastIndex; i += 1) {
@@ -70,13 +70,14 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 			}
 
 			const nailPoint = nailPoints[arrLastIndex];
-			const height = heightCache.get(items[arrLastIndex]) ?? estimatedItemHeight;
+			const height = !items[0] ? 0 : (heightCache.get(items[arrLastIndex]) ?? estimatedItemHeight);
 			const listHeight = nailPoint + height;
 
 			return {
 				memoizedItemsArray: items,
 				nailPoints,
 				listHeight,
+				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
 			};
 		}
 
@@ -109,9 +110,9 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	}
 
 	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>): TAnchor | null {
-		const { state } = this;
+		const { props, state } = this;
 
-		if (prevState.listHeight !== state.listHeight) {
+		if (props.items[0] && prevState.listHeight !== state.listHeight) {
 			const { nailPoints, pivotIndex } = prevState;
 			const { rawTopEdge = 0 } = this.lastWindowEdges ?? {};
 
@@ -141,6 +142,8 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 	}
 
 	private readonly handleScroll = () => {
+		if (!this.props.items[0]) return;
+
 		const { isInView, topEdge } = this.getWindowEdges();
 
 		if (isInView) {
@@ -244,12 +247,11 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				}
 			}
 
-			if (firstIndex === null || lastIndex === null) {
-				throw new Error('Bug! No visible items');
-			}
+			firstIndex ??= 0; // Sly assignment when something went wrong
+			lastIndex ??= firstIndex; // lastIndex must be >= firstIndex!
 
 			return {
-				isInView: true,
+				isInView: firstIndex !== null && lastIndex !== null,
 				firstIndex,
 				lastIndex,
 				pivotIndex: pivotIndex ?? state.pivotIndex,
