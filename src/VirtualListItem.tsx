@@ -1,5 +1,7 @@
-import React, {
+import {
 	ElementType,
+	PureComponent,
+	createRef,
 	createElement,
 } from 'react';
 import {
@@ -39,8 +41,8 @@ type TProps<I = unknown, C extends ElementType = ElementType> = {
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 };
 
-class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
-	private readonly itemElRef = React.createRef<HTMLElement>();
+class VirtualListItem<I, C extends ElementType> extends PureComponent<TProps<I, C>> {
+	private readonly itemElRef = createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
 
