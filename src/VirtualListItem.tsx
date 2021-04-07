@@ -29,7 +29,7 @@ export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement
 	};
 };
 
-type TProps<I = unknown, C extends ElementType = ElementType> = {
+export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	component: C;
 	itemData: I;
 	itemIndex: number;
@@ -55,6 +55,7 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 	}
 
 	private readonly attachResizeObserver = () => {
+		// Use lower priority for already cached items
 		const priority = this.props.itWasMeasured ? LowPriority : UserBlockingPriority;
 		this.scheduledObserver = scheduleCallback(priority, () => {
 			if (!this.itemElRef.current) return;

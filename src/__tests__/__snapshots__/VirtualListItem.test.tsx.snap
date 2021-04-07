@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`VirtualListItem should render 1`] = `
+<div
+  data-index="0"
+  data-measured="false"
+  style="position: absolute; width: 100%; transform: translateY(0px); contain: content;"
+>
+  {"data":{"id":0},"itWasMeasured":false}
+</div>
+`;
