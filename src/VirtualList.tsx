@@ -320,7 +320,7 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 
 	private readonly getItemKey = (itemData: I) => {
 		const hasKey = this.keyCache.get(itemData);
-		if (hasKey) return hasKey;
+		if (hasKey !== undefined) return hasKey;
 
 		const newKey = this.props.itemKey(itemData);
 		this.keyCache.set(itemData, newKey);
