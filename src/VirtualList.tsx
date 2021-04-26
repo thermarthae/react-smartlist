@@ -251,14 +251,16 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				}
 			}
 
-			firstIndex ??= 0; // Sly assignment when something went wrong
-			lastIndex ??= firstIndex; // lastIndex must be >= firstIndex!
+			const isInView = firstIndex !== null && lastIndex !== null;
+			firstIndex ??= state.firstIndex;
+			lastIndex ??= state.lastIndex;
+			pivotIndex ??= state.pivotIndex;
 
 			return {
-				isInView: firstIndex !== null && lastIndex !== null,
+				isInView,
 				firstIndex,
 				lastIndex,
-				pivotIndex: pivotIndex ?? state.pivotIndex,
+				pivotIndex,
 			};
 		});
 	};
