@@ -296,12 +296,28 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				if (!this.isItemVisible(index, newNailPoints)) break;
 				newFirstIndex = index;
 			}
+			if (!this.isItemVisible(newFirstIndex, newNailPoints)) {
+				for (let index = newFirstIndex + 1; index < arrLastIndex; index += 1) {
+					if (this.isItemVisible(index, newNailPoints)) {
+						newFirstIndex = index;
+						break;
+					}
+				}
+			}
 
 			let newLastIndex = state.lastIndex;
 			while (newLastIndex < arrLastIndex) {
 				const index = newLastIndex + 1;
 				if (!this.isItemVisible(index, newNailPoints)) break;
 				newLastIndex = index;
+			}
+			if (!this.isItemVisible(newLastIndex, newNailPoints)) {
+				for (let index = newLastIndex - 1; index > 0; index -= 1) {
+					if (this.isItemVisible(index, newNailPoints)) {
+						newLastIndex = index;
+						break;
+					}
+				}
 			}
 
 			return {
