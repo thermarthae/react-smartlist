@@ -17,6 +17,7 @@ type TScheduler = typeof import('scheduler');
 type TItem = { id: number };
 
 jest.useFakeTimers();
+const triggerMeasurement = () => jest.advanceTimersByTime(1);
 
 let getFirstCallbackNode: TScheduler['unstable_getFirstCallbackNode'];
 let VirtualListItem: typeof import('../VirtualListItem').default;
@@ -76,15 +77,14 @@ describe('VirtualListItem', () => {
 		render(<VirtualListItem {...defaultProps} />);
 		expect(getFirstCallbackNode()?.priorityLevel).toBe(UserBlockingPriority);
 
-		// flush scheduled heap
-		jest.advanceTimersByTime(1);
+		triggerMeasurement();
 
-		// everything except first render has LowPriority:
+		// everything except the first render has LowPriority:
 		render(<VirtualListItem {...defaultProps} itWasMeasured />);
 		expect(getFirstCallbackNode()?.priorityLevel).toBe(LowPriority);
 	});
 
-	it('should abort an observer attachment when premature unmount', () => {
+	it('should abort an observer attachment at premature unmount', () => {
 		const { unmount } = render(<VirtualListItem {...defaultProps} />);
 
 		expect(getFirstCallbackNode()?.callback).toBeDefined();
@@ -92,12 +92,12 @@ describe('VirtualListItem', () => {
 		expect(getFirstCallbackNode()?.callback).toBeNull();
 	});
 
-	it('should not trigger the onMeasure event when height equal to 0', () => {
+	it('should not trigger the onMeasure event when height is equal to 0', () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 0 }} />);
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		jest.advanceTimersByTime(1);
+		triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).not.toBeCalled();
@@ -108,7 +108,7 @@ describe('VirtualListItem', () => {
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		jest.advanceTimersByTime(1);
+		triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
