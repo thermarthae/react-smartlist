@@ -277,46 +277,37 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 			const heightCacheVersion = state.heightCacheVersion + 1;
 
 			const arrLastIndex = items.length - 1;
-			const newNailPoints = state.nailPoints.slice(0, entry.index + 1);
+			const nailPoints = state.nailPoints.slice(0, entry.index + 1);
 
 			for (let i = entry.index; i < arrLastIndex; i += 1) {
-				const nailPoint = newNailPoints[i];
+				const nailPoint = nailPoints[i];
 				const height = this.getItemHeight(i);
 
-				newNailPoints.push(nailPoint + height);
+				nailPoints.push(nailPoint + height);
 			}
 
-			const nailPoint = newNailPoints[arrLastIndex];
-			const height = this.getItemHeight(arrLastIndex);
-			const listHeight = nailPoint + height;
+			const listHeight = nailPoints[arrLastIndex] + this.getItemHeight(arrLastIndex);
+			let { firstIndex, lastIndex } = state;
 
-			let newFirstIndex = state.firstIndex;
-			while (newFirstIndex > 0) {
-				const index = newFirstIndex - 1;
-				if (!this.isItemVisible(index, newNailPoints)) break;
-				newFirstIndex = index;
+			for (let i = firstIndex - 1; i >= 0; i -= 1) {
+				if (!this.isItemVisible(i, nailPoints)) break;
+				firstIndex = i;
 			}
-			if (!this.isItemVisible(newFirstIndex, newNailPoints)) {
-				for (let index = newFirstIndex + 1; index < arrLastIndex; index += 1) {
-					if (this.isItemVisible(index, newNailPoints)) {
-						newFirstIndex = index;
-						break;
-					}
+			if (!this.isItemVisible(firstIndex, nailPoints)) {
+				for (let i = firstIndex + 1; i < items.length; i += 1) {
+					firstIndex = i;
+					if (this.isItemVisible(i, nailPoints)) break;
 				}
 			}
 
-			let newLastIndex = state.lastIndex;
-			while (newLastIndex < arrLastIndex) {
-				const index = newLastIndex + 1;
-				if (!this.isItemVisible(index, newNailPoints)) break;
-				newLastIndex = index;
+			for (let i = lastIndex + 1; i < items.length; i += 1) {
+				if (!this.isItemVisible(i, nailPoints)) break;
+				lastIndex = i;
 			}
-			if (!this.isItemVisible(newLastIndex, newNailPoints)) {
-				for (let index = newLastIndex - 1; index > 0; index -= 1) {
-					if (this.isItemVisible(index, newNailPoints)) {
-						newLastIndex = index;
-						break;
-					}
+			if (!this.isItemVisible(lastIndex, nailPoints)) {
+				for (let i = lastIndex - 1; i >= 0; i -= 1) {
+					lastIndex = i;
+					if (this.isItemVisible(i, nailPoints)) break;
 				}
 			}
 
@@ -324,9 +315,9 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 				...state,
 				heightCacheVersion,
 				listHeight,
-				nailPoints: newNailPoints,
-				firstIndex: newFirstIndex,
-				lastIndex: newLastIndex,
+				nailPoints,
+				firstIndex,
+				lastIndex,
 			};
 		});
 	};
