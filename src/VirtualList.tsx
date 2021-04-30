@@ -219,37 +219,19 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 
 	private readonly getVisibleItems = () => {
 		this.setState((state, { items }) => {
-			const indexOfLastArrItem = items.length - 1;
-			const initIndex = state.lastIndex;
-
-			let isMainSideDone = false;
-			let isVisible = false;
-			let direction: 1 | -1 = 1;
-
 			let firstIndex: null | number = null;
 			let lastIndex: null | number = null;
 			let pivotIndex: null | number = null;
 
-			// eslint-disable-next-line no-constant-condition
-			for (let i = initIndex; true; i += direction) {
-				if (i < 0 || indexOfLastArrItem < i || (!isVisible && firstIndex !== null)) {
-					if (isMainSideDone) break;
+			const scanIndex = (i: number) => {
+				if (!this.isItemVisible(i)) return;
+				if (firstIndex === null || i < firstIndex) firstIndex = i;
+				if (lastIndex === null || i > lastIndex) lastIndex = i;
+				if (pivotIndex === null && state.heightCache.has(items[i])) pivotIndex = i;
+			};
 
-					isMainSideDone = true;
-					direction *= -1;
-					i = initIndex;
-				}
-
-				isVisible = this.isItemVisible(i);
-				if (isVisible) {
-					if (firstIndex === null || i < firstIndex) firstIndex = i;
-					if (lastIndex === null || i > lastIndex) lastIndex = i;
-
-					if (!pivotIndex && state.heightCache.has(items[i])) {
-						pivotIndex = i;
-					}
-				}
-			}
+			for (let i = state.lastIndex; i >= 0; i -= 1) scanIndex(i);
+			for (let i = state.lastIndex; i < items.length; i += 1) scanIndex(i);
 
 			const isInView = firstIndex !== null && lastIndex !== null;
 			firstIndex ??= state.firstIndex;
