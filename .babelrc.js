@@ -3,16 +3,11 @@ module.exports = (api) => {
 	const isTest = api.env('test');
 
 	return {
-		plugins: [
-			'@babel/plugin-proposal-class-properties',
-		],
+		...(isTest && { targets: { node: 'current' } }),
 		presets: [
 			[
 				'@babel/preset-env',
-				{
-					bugfixes: true, // TODO: Remove when Babel 8
-					targets: !isTest ? undefined : { node: 'current' },
-				},
+				{ bugfixes: true }, // TODO: Remove when Babel 8
 			],
 			'@babel/preset-typescript',
 			'@babel/preset-react',
