@@ -253,4 +253,17 @@ describe('VirtualList', () => {
 		expect(firstTopItem.dataset.id).toEqual(defaultProps.items[0].id.toString());
 		expect(lastBottomItem.dataset.id).toEqual(defaultProps.items.slice(-1)[0].id.toString());
 	});
+
+	it('should correctly render when measured item is larger than viewport', () => {
+		const items: TItem[] = [
+			{ id: 0, height: windowInnerHeight * 2 },
+			...defaultProps.items.slice(1),
+		];
+		const { getAllByText } = render(<VirtualList {...defaultProps} items={items} />);
+
+		triggerMeasurement();
+
+		const renderedItems = getAllByText(/ListItem/);
+		expect(renderedItems).toHaveLength(1);
+	});
 });
