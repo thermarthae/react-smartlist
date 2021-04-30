@@ -11,7 +11,8 @@
 			"runtimeExecutable": "yarn",
 			"args": [
 				"test",
-				"--runInBand"
+				"--runInBand",
+				"--watch"
 			],
 			"cwd": "${workspaceFolder}",
 			"console": "integratedTerminal",
