@@ -124,17 +124,14 @@ describe('VirtualList', () => {
 	});
 
 	it('should handle `items` prop change', () => {
-		const initialItems = genItemArray(5); // 1,2,3,4,5
-		const updatedItems = genItemArray(5).reverse(); // 5,4,3,2,1
+		const initialItems = genItemArray(5); // 0,1,2,3,4
+		const updatedItems = genItemArray(10).slice(5); // 5,6,7,8,9
 
-		const { rerender, getAllByText } = render(<VirtualList {...defaultProps} items={initialItems} />);
-		const initialOrder = getAllByText(/ListItem/).map(el => el.dataset.id);
-
+		const { rerender } = render(<VirtualList {...defaultProps} items={initialItems} />);
 		rerender(<VirtualList {...defaultProps} items={updatedItems} />);
-		const updatedOrder = getAllByText(/ListItem/).map(el => el.dataset.id);
 
-		expect(updatedOrder).toStrictEqual(initialOrder.reverse());
-		expect(ItemComponent).toHaveBeenCalledTimes(10);
+		const calls = ItemComponent.mock.calls.map(item => item[0].data);
+		expect(calls).toEqual([...initialItems, ...updatedItems]);
 		expect(itemKeyFn).toHaveBeenCalledTimes(10);
 	});
 
@@ -265,5 +262,33 @@ describe('VirtualList', () => {
 
 		const renderedItems = getAllByText(/ListItem/);
 		expect(renderedItems).toHaveLength(1);
+	});
+
+	it('should not rerender when it is unnecessary', () => {
+		let prevProps: TVirtualListProps<TItem> = {
+			...defaultProps,
+			className: 'test1',
+			sharedProps: {},
+			initState: {},
+		};
+		const sCU = jest.spyOn(VirtualList.prototype, 'shouldComponentUpdate');
+		const { rerender } = render(<VirtualList {...prevProps} />);
+
+		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
+			sCU.mockClear();
+			prevProps = { ...prevProps, ...newProps };
+			rerender(<VirtualList {...prevProps} />);
+
+			expect(sCU).toHaveNthReturnedWith(1, shouldRerender);
+		};
+
+		testProps({}, false);
+		testProps({ items: genItemArray(3) }, true);
+		testProps({ estimatedItemHeight: 90 }, true);
+		testProps({ itemKey: () => Math.random() }, true);
+		testProps({ overscanPadding: 90 }, true);
+		testProps({ className: 'test2' }, true);
+		testProps({ sharedProps: { x: 2 } }, true);
+		testProps({ initState: { lastIndex: 3 } }, false);
 	});
 });

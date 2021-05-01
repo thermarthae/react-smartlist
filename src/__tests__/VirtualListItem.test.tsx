@@ -118,4 +118,31 @@ describe('VirtualListItem', () => {
 			height: 1,
 		});
 	});
+
+	it('should not rerender when it is unnecessary', () => {
+		let prevProps: TVirtualListItemProps<TItem> = {
+			...defaultProps,
+			sharedProps: {},
+		};
+		const sCU = jest.spyOn(VirtualListItem.prototype, 'shouldComponentUpdate');
+		const { rerender } = render(<VirtualListItem {...prevProps} />);
+
+		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
+			sCU.mockClear();
+			prevProps = { ...prevProps, ...newProps };
+			rerender(<VirtualListItem {...prevProps} />);
+
+			expect(sCU).toHaveNthReturnedWith(1, shouldRerender);
+		};
+
+		testProps({}, false);
+		testProps({ itemData: { ...prevProps.itemData } }, false);
+		testProps({ itemData: { id: 52 } }, true);
+		testProps({ itemIndex: 43 }, true);
+		testProps({ nailPoint: 91 }, true);
+		testProps({ itWasMeasured: !prevProps.itWasMeasured }, true);
+		testProps({ onMeasure: () => 0 }, true);
+		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
+		testProps({ sharedProps: { x: 2 } }, true);
+	});
 });

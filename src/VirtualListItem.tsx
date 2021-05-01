@@ -1,5 +1,6 @@
 import React, {
 	ElementType,
+	Component,
 	createElement,
 } from 'react';
 import {
@@ -11,6 +12,7 @@ import {
 } from 'scheduler';
 
 import { TEntry } from './VirtualList';
+import shallowDiffers from './shallowDiffers';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement> = {
@@ -39,7 +41,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 };
 
-class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TProps<I, C>> {
+class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> {
 	private readonly itemElRef = React.createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
@@ -48,6 +50,21 @@ class VirtualListItem<I, C extends ElementType> extends React.PureComponent<TPro
 
 	public componentDidMount() {
 		this.attachResizeObserver();
+	}
+
+	public shouldComponentUpdate(nextProps: TProps<I, C>) {
+		if (this.props !== nextProps) {
+			const { itemData: data, sharedProps: SP, ...prevRest } = this.props;
+			const { itemData: nextData, sharedProps: nextSP, ...nextRest } = nextProps;
+
+			if (
+				shallowDiffers(prevRest, nextRest)
+				|| shallowDiffers(data, nextData)
+				|| shallowDiffers(SP, nextSP)
+			) return true;
+		}
+
+		return false;
 	}
 
 	public componentWillUnmount() {

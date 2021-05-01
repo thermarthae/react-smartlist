@@ -1,10 +1,11 @@
 import React, {
 	ElementType,
-	PureComponent,
+	Component,
 	createRef,
 } from 'react';
 
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
+import shallowDiffers from './shallowDiffers';
 
 type TItemID = string | number;
 
@@ -54,7 +55,7 @@ type TState<I = unknown> = {
 	pivotIndex: number;
 };
 
-class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, TState<I>> {
+class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
 	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight } = props;
@@ -111,6 +112,18 @@ class VirtualList<I, C extends ElementType> extends PureComponent<TProps<I, C>, 
 		document.addEventListener('scroll', this.handleScroll);
 		window.addEventListener('resize', this.handleScroll);
 		this.handleScroll();
+	}
+
+	public shouldComponentUpdate(nextProps: TProps<I, C>, nextState: TState<I>) {
+		if (this.props !== nextProps) {
+			// `initState` is used only at the component init, so it shouldn't rerender the list
+			const { initState: a, ...prevRest } = this.props;
+			const { initState: b, ...nextRest } = nextProps;
+
+			if (shallowDiffers(prevRest, nextRest)) return true;
+		}
+
+		return shallowDiffers(this.state, nextState);
 	}
 
 	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>): TAnchor | null {
