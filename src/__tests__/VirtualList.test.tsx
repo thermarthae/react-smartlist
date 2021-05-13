@@ -123,6 +123,19 @@ describe('VirtualList', () => {
 		expect(estimatedListHeight).not.toEqual(expectedListHeight);
 	});
 
+	it('should handle `disableMeasurment` prop', () => {
+		const { container } = render(<VirtualList {...defaultProps} disableMeasurment />);
+		const list = container.firstElementChild as HTMLElement;
+		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= windowInnerHeight)!;
+		const expectedListHeight = defaultProps.items.length * estimatedItemHeight;
+
+		triggerMeasurement();
+
+		expect(list.childElementCount).toEqual(expectedItemsCount);
+		expect(list.style.height).toEqual(`${expectedListHeight}px`);
+		expect(parseInt(list.style.height, 10)).toEqual(expectedListHeight);
+	});
+
 	it('should handle `items` prop change', () => {
 		const initialItems = genItemArray(5); // 0,1,2,3,4
 		const updatedItems = genItemArray(10).slice(5); // 5,6,7,8,9

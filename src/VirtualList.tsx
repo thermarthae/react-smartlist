@@ -40,6 +40,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	className?: string;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 	initState?: Partial<TState<I>>;
+	disableMeasurment?: boolean;
 };
 
 type TState<I = unknown> = {
@@ -91,7 +92,11 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 
 	public state: TState<I> = {
 		memoizedItemsArray: this.props.items,
-		heightCache: new Map<I, number>(),
+		heightCache: new Map(
+			!this.props.disableMeasurment
+				? undefined
+				: this.props.items.map(item => [item, this.props.estimatedItemHeight]),
+		),
 		heightCacheVersion: 0,
 		isInView: true,
 		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
@@ -345,6 +350,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 			items,
 			className,
 			sharedProps,
+			disableMeasurment,
 		} = this.props;
 		const {
 			heightCache,
@@ -379,6 +385,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 							nailPoint={nailPoints[index]}
 							sharedProps={sharedProps}
 							onMeasure={this.handleMeasure}
+							isMeasurmentDisabled={disableMeasurment}
 						/>
 					);
 				})}

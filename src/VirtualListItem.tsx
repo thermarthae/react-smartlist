@@ -39,6 +39,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	itWasMeasured: boolean;
 	onMeasure: (item: TEntry<I>) => void;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
+	isMeasurmentDisabled?: boolean;
 };
 
 class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> {
@@ -67,11 +68,20 @@ class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> 
 		return false;
 	}
 
+	public componentDidUpdate(prevProps: TProps<I, C>) {
+		if (prevProps.isMeasurmentDisabled !== this.props.isMeasurmentDisabled) {
+			if (this.props.isMeasurmentDisabled) this.detachResizeObserver();
+			else this.attachResizeObserver();
+		}
+	}
+
 	public componentWillUnmount() {
 		this.detachResizeObserver();
 	}
 
 	private readonly attachResizeObserver = () => {
+		if (this.props.isMeasurmentDisabled) return;
+
 		// Use lower priority for already cached items
 		const priority = this.props.itWasMeasured ? LowPriority : UserBlockingPriority;
 		this.scheduledObserver = scheduleCallback(priority, () => {

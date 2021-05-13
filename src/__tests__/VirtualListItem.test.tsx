@@ -84,6 +84,19 @@ describe('VirtualListItem', () => {
 		expect(getFirstCallbackNode()?.priorityLevel).toBe(LowPriority);
 	});
 
+	it('should not attach observers when measurment is disabled', () => {
+		render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
+		expect(getFirstCallbackNode()).toBeNull();
+	});
+
+	it('should attach observers when measurment is no longer disabled', () => {
+		const { rerender } = render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
+		expect(getFirstCallbackNode()).toBeNull();
+
+		rerender(<VirtualListItem {...defaultProps} isMeasurmentDisabled={false} />);
+		expect(getFirstCallbackNode()).toBeDefined();
+	});
+
 	it('should abort an observer attachment at premature unmount', () => {
 		const { unmount } = render(<VirtualListItem {...defaultProps} />);
 
