@@ -330,7 +330,9 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 	};
 
 	private readonly isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
-		const { topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges ?? {};
+		const { isInView, topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges ?? {};
+		if (!isInView) return false;
+
 		const nailPoint = nailPoints[index];
 		const height = this.getItemHeight(index);
 
