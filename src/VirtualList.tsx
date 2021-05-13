@@ -161,23 +161,29 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 	private readonly handleScroll = () => {
 		if (!this.props.items[0]) return;
 
+		const { state } = this;
 		const { isInView, topEdge } = this.getWindowEdges();
 
 		if (isInView) {
 			const next = this.getVisibleItems();
-			this.setState(next);
-		} else {
-			let dummyPivot = 0;
-			if (topEdge !== 0) dummyPivot = this.props.items.length - 1;
 
 			// Bailout if a state doesn't require an update to prevent empty render commit.
 			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-			if (this.state.pivotIndex === dummyPivot && !this.state.isInView) return;
+			if (
+				next.firstIndex !== state.firstIndex
+				|| next.lastIndex !== state.lastIndex
+				|| next.pivotIndex !== state.pivotIndex
+				|| next.isInView !== state.isInView
+			) this.setState(next);
+		} else {
+			let pivotIndex = 0;
+			if (topEdge !== 0) pivotIndex = this.props.items.length - 1;
 
-			this.setState({
-				isInView: false,
-				pivotIndex: dummyPivot,
-			});
+			// Bailout if a state doesn't require an update to prevent empty render commit.
+			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
+			if (isInView !== state.isInView || pivotIndex !== state.pivotIndex) {
+				this.setState({ isInView, pivotIndex });
+			}
 		}
 	};
 
