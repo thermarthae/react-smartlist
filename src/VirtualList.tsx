@@ -164,7 +164,8 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		const { isInView, topEdge } = this.getWindowEdges();
 
 		if (isInView) {
-			this.getVisibleItems();
+			const next = this.getVisibleItems();
+			this.setState(next);
 		} else {
 			let dummyPivot = 0;
 			if (topEdge !== 0) dummyPivot = this.props.items.length - 1;
@@ -230,34 +231,48 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		return edges;
 	};
 
-	private readonly getVisibleItems = () => {
-		this.setState((state, { items }) => {
-			let firstIndex: null | number = null;
-			let lastIndex: null | number = null;
-			let pivotIndex: null | number = null;
+	private readonly getVisibleItems = (nailPoints?: number[]) => {
+		const { items } = this.props;
+		const { state } = this;
+		const { heightCache, pivotIndex: oldPivot } = state;
 
-			const scanIndex = (i: number) => {
-				if (!this.isItemVisible(i)) return;
-				if (firstIndex === null || i < firstIndex) firstIndex = i;
-				if (lastIndex === null || i > lastIndex) lastIndex = i;
-				if (pivotIndex === null && state.heightCache.has(items[i])) pivotIndex = i;
-			};
+		let firstIndex: null | number = null;
+		let lastIndex: null | number = null;
+		let pivotIndex: null | number = null;
 
-			for (let i = state.lastIndex; i >= 0; i -= 1) scanIndex(i);
-			for (let i = state.lastIndex; i < items.length; i += 1) scanIndex(i);
+		// returns `true` when a for loop should break
+		const scanIndex = (i: number) => {
+			// `firstIndex` and `lastIndex` have always the same type at given time (null or number)
+			if (!this.isItemVisible(i, nailPoints)) return firstIndex !== null;
 
-			const isInView = firstIndex !== null && lastIndex !== null;
-			firstIndex ??= state.firstIndex;
-			lastIndex ??= state.lastIndex;
-			pivotIndex ??= state.pivotIndex;
+			if (firstIndex !== null && lastIndex !== null) {
+				if (i < firstIndex) firstIndex = i;
+				if (i > lastIndex) lastIndex = i;
+			} else {
+				firstIndex = i;
+				lastIndex = i;
+			}
+			if (pivotIndex === null && heightCache.has(items[i])) pivotIndex = i;
+		};
 
-			return {
-				isInView,
-				firstIndex,
-				lastIndex,
-				pivotIndex,
-			};
-		});
+		for (let i = oldPivot; i >= 0; i -= 1) {
+			if (scanIndex(i)) break;
+		}
+		for (let i = oldPivot + 1; i < items.length; i += 1) {
+			if (scanIndex(i)) break;
+		}
+
+		const isInView = firstIndex !== null && lastIndex !== null;
+		firstIndex ??= state.firstIndex;
+		lastIndex ??= state.lastIndex;
+		pivotIndex ??= state.pivotIndex;
+
+		return {
+			isInView,
+			firstIndex,
+			lastIndex,
+			pivotIndex,
+		};
 	};
 
 	private readonly handleMeasure = (entry: TEntry<I>) => {
@@ -282,37 +297,13 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 			}
 
 			const listHeight = nailPoints[arrLastIndex] + this.getItemHeight(arrLastIndex);
-			let { firstIndex, lastIndex } = state;
-
-			for (let i = firstIndex - 1; i >= 0; i -= 1) {
-				if (!this.isItemVisible(i, nailPoints)) break;
-				firstIndex = i;
-			}
-			if (!this.isItemVisible(firstIndex, nailPoints)) {
-				for (let i = firstIndex + 1; i < items.length; i += 1) {
-					firstIndex = i;
-					if (this.isItemVisible(i, nailPoints)) break;
-				}
-			}
-
-			for (let i = lastIndex + 1; i < items.length; i += 1) {
-				if (!this.isItemVisible(i, nailPoints)) break;
-				lastIndex = i;
-			}
-			if (!this.isItemVisible(lastIndex, nailPoints)) {
-				for (let i = lastIndex - 1; i >= 0; i -= 1) {
-					lastIndex = i;
-					if (this.isItemVisible(i, nailPoints)) break;
-				}
-			}
 
 			return {
 				...state,
 				heightCacheVersion,
 				listHeight,
 				nailPoints,
-				firstIndex,
-				lastIndex,
+				...this.getVisibleItems(nailPoints),
 			};
 		});
 	};
