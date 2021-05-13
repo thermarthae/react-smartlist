@@ -217,18 +217,16 @@ describe('VirtualList', () => {
 	});
 
 	it('should not render any items when scrolled out of bounds', () => {
-		const { queryAllByText, container } = render(<VirtualList {...defaultProps} />);
-		const list = container.firstElementChild as HTMLElement;
-		const listHeight = parseInt(list.style.height, 10);
+		const { queryAllByText } = render(<VirtualList {...defaultProps} />);
 
-		simulateScroll(0 - windowInnerHeight - 10); // above the list
-		expect(queryAllByText(/ListItem/)).toHaveLength(0);
+		simulateScroll(-999999); // scroll above the list
+		expect(queryAllByText(/ListItem/)).toEqual([]);
 
-		simulateScroll(0);
-		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
+		simulateScroll(0); // scroll to the top of the list
+		expect(queryAllByText(/ListItem/)).not.toEqual([]);
 
-		simulateScroll(listHeight + 10); // below the list
-		expect(queryAllByText(/ListItem/)).toHaveLength(0);
+		simulateScroll(999999); // scroll below the list
+		expect(queryAllByText(/ListItem/)).toEqual([]);
 	});
 
 	it('should handle instant top/bottom scrolling', () => {
