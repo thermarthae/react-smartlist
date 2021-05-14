@@ -302,4 +302,26 @@ describe('VirtualList', () => {
 		testProps({ sharedProps: { x: 2 } }, true);
 		testProps({ initState: { lastIndex: 3 } }, false);
 	});
+
+	it('should handle the measurement when item is no longer visible', () => {
+		const spiedFn = jest.spyOn(VirtualList.prototype, 'render');
+		const { container, getAllByText } = render(<VirtualList {...defaultProps} />);
+		const list = container.firstElementChild as HTMLElement;
+		const firstlyRenderedItems = getAllByText(/ListItem/);
+		const firstListHeight = parseInt(list.style.height, 10);
+
+		// @ts-expect-error Hack used to trigger `handleMeasure` method
+		const measureFn = (spiedFn.mock.instances[0] as any as typeof VirtualList.prototype).handleMeasure;
+
+		const item = defaultProps.items[30];
+		const height = 9999;
+		measureFn({
+			index: item.id,
+			data: item,
+			height,
+		});
+
+		expect(getAllByText(/ListItem/)).toEqual(firstlyRenderedItems);
+		expect(parseInt(list.style.height, 10)).toEqual(firstListHeight + height - estimatedItemHeight);
+	});
 });
