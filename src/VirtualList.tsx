@@ -7,7 +7,7 @@ import React, {
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
 import shallowDiffers from './shallowDiffers';
 
-type TItemID = string | number;
+export type TItemID = string | number;
 
 type TEdges = {
 	bottomEdge: number;
@@ -24,6 +24,7 @@ type TAnchor = {
 };
 
 export type TEntry<Item> = {
+	id: TItemID;
 	index: number;
 	height: number;
 	data: Item;
@@ -46,7 +47,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 type TState<I = unknown> = {
 	/** @ignore */
 	memoizedItemsArray: readonly I[];
-	heightCache: Map<I, number>;
+	heightCache: Map<TItemID, number>;
 	heightCacheVersion: number;
 	isInView: boolean;
 	nailPoints: readonly number[];
@@ -59,20 +60,21 @@ type TState<I = unknown> = {
 class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
 	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
-			const { items, estimatedItemHeight } = props;
+			const { items, estimatedItemHeight, itemKey } = props;
 			const { heightCache } = state;
 			const arrLastIndex = Math.max(0, items.length - 1); // HACK: `items` may be empty!
 			const nailPoints = [0];
+			const getHeight = (i: number) => heightCache.get(itemKey(items[i])) ?? estimatedItemHeight;
 
 			for (let i = 0; i < arrLastIndex; i += 1) {
 				const nailPoint = nailPoints[i];
-				const height = heightCache.get(items[i]) ?? estimatedItemHeight;
+				const height = getHeight(i);
 
 				nailPoints.push(nailPoint + height);
 			}
 
 			const nailPoint = nailPoints[arrLastIndex];
-			const height = !items[0] ? 0 : (heightCache.get(items[arrLastIndex]) ?? estimatedItemHeight);
+			const height = !items[0] ? 0 : getHeight(arrLastIndex);
 			const listHeight = nailPoint + height;
 
 			return {
@@ -95,7 +97,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		heightCache: new Map(
 			!this.props.disableMeasurment
 				? undefined
-				: this.props.items.map(item => [item, this.props.estimatedItemHeight]),
+				: this.props.items.map(item => [this.props.itemKey(item), this.props.estimatedItemHeight]),
 		),
 		heightCacheVersion: 0,
 		isInView: true,
@@ -263,7 +265,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 				firstIndex = i;
 				lastIndex = i;
 			}
-			if (pivotIndex === null && heightCache.has(items[i])) pivotIndex = i;
+			if (pivotIndex === null && heightCache.has(this.getItemKey(i))) pivotIndex = i;
 		};
 
 		for (let i = oldPivot; i >= 0; i -= 1) {
@@ -288,13 +290,13 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 
 	private readonly handleMeasure = (entry: TEntry<I>) => {
 		this.setState((state, { items }) => {
-			if (state.heightCache.get(entry.data) === entry.height) return null;
+			if (state.heightCache.get(entry.id) === entry.height) return null;
 
 			// To update the height of an item, we are *mutating* the `heightCache` map.
 			// Unluckily, React will not detect our direct change.
 			// To let him know about the change, we are just bumping a dummy `heightCacheVersion` state.
 			// We could create a new map, but bumping is more performant - O(1) vs. O(n).
-			state.heightCache.set(entry.data, entry.height);
+			state.heightCache.set(entry.id, entry.height);
 			const heightCacheVersion = state.heightCacheVersion + 1;
 
 			const arrLastIndex = items.length - 1;
@@ -320,11 +322,13 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 	};
 
 	private readonly getItemHeight = (index: number) => {
-		const item = this.props.items[index];
-		return this.state.heightCache.get(item) ?? this.props.estimatedItemHeight;
+		const key = this.getItemKey(index);
+		return this.state.heightCache.get(key) ?? this.props.estimatedItemHeight;
 	};
 
-	private readonly getItemKey = (itemData: I) => {
+	private readonly getItemKey = (index: number) => {
+		const itemData = this.props.items[index];
+
 		const hasKey = this.keyCache.get(itemData);
 		if (hasKey !== undefined) return hasKey;
 
@@ -373,15 +377,16 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 				}}
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
-					const itemID = this.getItemKey(itemData);
 					const index = firstIndex + i;
+					const itemID = this.getItemKey(index);
 					return (
 						<VirtualListItem
 							key={itemID}
+							itemID={itemID}
 							itemIndex={index}
 							component={component}
 							itemData={itemData}
-							itWasMeasured={heightCache.has(itemData)}
+							itWasMeasured={heightCache.has(itemID)}
 							nailPoint={nailPoints[index]}
 							sharedProps={sharedProps}
 							onMeasure={this.handleMeasure}

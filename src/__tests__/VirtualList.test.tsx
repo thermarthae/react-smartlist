@@ -316,6 +316,7 @@ describe('VirtualList', () => {
 		const item = defaultProps.items[30];
 		const height = 9999;
 		measureFn({
+			id: item.id,
 			index: item.id,
 			data: item,
 			height,
@@ -323,5 +324,19 @@ describe('VirtualList', () => {
 
 		expect(getAllByText(/ListItem/)).toEqual(firstlyRenderedItems);
 		expect(parseInt(list.style.height, 10)).toEqual(firstListHeight + height - estimatedItemHeight);
+	});
+
+	it('should not rerender when `items` array has changed without changing its actual content', () => {
+		let items = defaultProps.items.slice(0, 3);
+		const { rerender } = render(<VirtualList {...defaultProps} items={items} />);
+		triggerMeasurement();
+		ItemComponent.mockClear();
+
+		items = [...items];
+		items[0] = { ...items[0] };
+		rerender(<VirtualList {...defaultProps} items={items} />);
+		triggerMeasurement();
+
+		expect(ItemComponent).not.toHaveBeenCalled();
 	});
 });

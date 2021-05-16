@@ -11,7 +11,7 @@ import {
 	unstable_LowPriority as LowPriority,
 } from 'scheduler';
 
-import { TEntry } from './VirtualList';
+import { TItemID, TEntry } from './VirtualList';
 import shallowDiffers from './shallowDiffers';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
@@ -33,6 +33,7 @@ export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement
 
 export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	component: C;
+	itemID: TItemID;
 	itemData: I;
 	itemIndex: number;
 	nailPoint: number;
@@ -98,7 +99,12 @@ class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> 
 	};
 
 	private readonly measureHeight: ResizeObserverCallback = ([entry]) => {
-		const { onMeasure, itemIndex, itemData } = this.props;
+		const {
+			onMeasure,
+			itemID,
+			itemIndex,
+			itemData,
+		} = this.props;
 
 		const height = entry.borderBoxSize?.[0].blockSize ?? 0;
 		if (height === 0) {
@@ -106,6 +112,7 @@ class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> 
 		}
 
 		onMeasure({
+			id: itemID,
 			index: itemIndex,
 			data: itemData,
 			height,
