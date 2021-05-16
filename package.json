@@ -31,7 +31,7 @@
 		"infinite"
 	],
 	"scripts": {
-		"build": "microbundle --jsx React.createElement --no-compress",
+		"build": "microbundle -f cjs,es,modern --jsx React.createElement --no-compress",
 		"lint": "eslint ./src --ext .ts,.tsx --cache",
 		"test": "jest"
 	},
