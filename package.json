@@ -1,6 +1,6 @@
 {
 	"name": "@thermarthae/react-smartlist",
-	"version": "0.0.2",
+	"version": "1.0.0",
 	"license": "MIT",
 	"author": "thermarthae <thermarthae@protonmail.com>",
 	"source": "./src/index.ts",
