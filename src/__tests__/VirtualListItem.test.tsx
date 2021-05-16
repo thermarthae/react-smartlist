@@ -58,6 +58,7 @@ describe('VirtualListItem', () => {
 		defaultProps = {
 			component: ItemComponent,
 			itWasMeasured: false,
+			itemID: 0,
 			itemData: { id: 0 },
 			itemIndex: 0,
 			nailPoint: 0,
