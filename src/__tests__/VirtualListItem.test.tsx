@@ -126,6 +126,7 @@ describe('VirtualListItem', () => {
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
 		expect(onMeasureFn).toHaveBeenCalledWith({
+			id: defaultProps.itemID,
 			index: defaultProps.itemIndex,
 			data: defaultProps.itemData,
 			height: 1,
