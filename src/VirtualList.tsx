@@ -121,8 +121,6 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 
 	private readonly listElRef = createRef<HTMLDivElement>();
 
-	private readonly keyCache = new Map<I, TItemID>();
-
 	private lastWindowEdges: TEdges | null = null;
 
 	public componentDidMount() {
@@ -338,14 +336,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 
 	private readonly getIndexKey = (index: number) => {
 		const itemData = this.props.items[index];
-
-		const hasKey = this.keyCache.get(itemData);
-		if (hasKey !== undefined) return hasKey;
-
-		const newKey = this.props.itemKey(itemData);
-		this.keyCache.set(itemData, newKey);
-
-		return newKey;
+		return this.props.itemKey(itemData);
 	};
 
 	private readonly isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {

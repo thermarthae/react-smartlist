@@ -95,7 +95,6 @@ describe('VirtualList', () => {
 
 		expect(list.childElementCount).toEqual(3);
 		expect(ItemComponent).toHaveBeenCalledTimes(3);
-		expect(itemKeyFn).toHaveBeenCalledTimes(3);
 	});
 
 	it('should correctly estimate a list height', () => {
@@ -145,7 +144,7 @@ describe('VirtualList', () => {
 
 		const calls = ItemComponent.mock.calls.map(item => item[0].data);
 		expect(calls).toEqual([...initialItems, ...updatedItems]);
-		expect(itemKeyFn).toHaveBeenCalledTimes(10);
+		expect(ItemComponent).toHaveBeenCalledTimes(10);
 	});
 
 	it('should support a `className` prop', () => {
