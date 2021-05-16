@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import VirtualList, { TProps as TVirtualListProps } from '../VirtualList';
 import { TChildrenProps } from '../VirtualListItem';
-import '../../tests/ResizeObserverHack';
 
 type TItem = {
 	id: number;

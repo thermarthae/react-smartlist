@@ -6,7 +6,6 @@ import {
 	unstable_UserBlockingPriority as UserBlockingPriority,
 } from 'scheduler';
 
-import '../../tests/ResizeObserverHack';
 import { TEntry } from '../VirtualList';
 import {
 	TProps as TVirtualListItemProps,
