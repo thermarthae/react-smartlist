@@ -92,22 +92,32 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		return null;
 	}
 
-	public state: TState<I> = {
-		memoizedItemsArray: this.props.items,
-		heightCache: new Map(
-			!this.props.disableMeasurment
-				? undefined
-				: this.props.items.map(item => [this.props.itemKey(item), this.props.estimatedItemHeight]),
-		),
-		heightCacheVersion: 0,
-		isInView: true,
-		nailPoints: this.props.items.map((_data, index) => index * this.props.estimatedItemHeight),
-		listHeight: this.props.items.length * this.props.estimatedItemHeight,
-		firstIndex: 0,
-		lastIndex: 0,
-		pivotIndex: 0,
-		...this.props.initState,
-	};
+	public state: TState<I> = (() => {
+		const {
+			items,
+			itemKey,
+			disableMeasurment,
+			estimatedItemHeight,
+			initState,
+		} = this.props;
+
+		return {
+			memoizedItemsArray: items,
+			heightCache: new Map(
+				!disableMeasurment
+					? undefined
+					: items.map(item => [itemKey(item), estimatedItemHeight]),
+			),
+			heightCacheVersion: 0,
+			isInView: true,
+			nailPoints: items.map((_data, index) => index * estimatedItemHeight),
+			listHeight: items.length * estimatedItemHeight,
+			firstIndex: 0,
+			lastIndex: 0,
+			pivotIndex: 0,
+			...initState,
+		};
+	})();
 
 	private readonly listElRef = createRef<HTMLDivElement>();
 
@@ -143,7 +153,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 			return {
 				index: pivotIndex,
 				offset: rawTopEdge - nailPoints[pivotIndex],
-				height: this.getItemHeight(pivotIndex),
+				height: this.getIndexHeight(pivotIndex),
 			};
 		}
 
@@ -206,7 +216,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		} = anchor;
 		const { offsetTop } = listEl;
 		const nailPoint = nailPoints[index];
-		const currentHeight = this.getItemHeight(index);
+		const currentHeight = this.getIndexHeight(index);
 
 		const newScrollTop = offsetTop + nailPoint + ((offset - height) + currentHeight);
 		if (newScrollTop <= offsetTop) return;
@@ -265,7 +275,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 				firstIndex = i;
 				lastIndex = i;
 			}
-			if (pivotIndex === null && heightCache.has(this.getItemKey(i))) pivotIndex = i;
+			if (pivotIndex === null && heightCache.has(this.getIndexKey(i))) pivotIndex = i;
 		};
 
 		for (let i = oldPivot; i >= 0; i -= 1) {
@@ -304,12 +314,12 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 
 			for (let i = entry.index; i < arrLastIndex; i += 1) {
 				const nailPoint = nailPoints[i];
-				const height = this.getItemHeight(i);
+				const height = this.getIndexHeight(i);
 
 				nailPoints.push(nailPoint + height);
 			}
 
-			const listHeight = nailPoints[arrLastIndex] + this.getItemHeight(arrLastIndex);
+			const listHeight = nailPoints[arrLastIndex] + this.getIndexHeight(arrLastIndex);
 
 			return {
 				...state,
@@ -321,12 +331,12 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		});
 	};
 
-	private readonly getItemHeight = (index: number) => {
-		const key = this.getItemKey(index);
+	private readonly getIndexHeight = (index: number) => {
+		const key = this.getIndexKey(index);
 		return this.state.heightCache.get(key) ?? this.props.estimatedItemHeight;
 	};
 
-	private readonly getItemKey = (index: number) => {
+	private readonly getIndexKey = (index: number) => {
 		const itemData = this.props.items[index];
 
 		const hasKey = this.keyCache.get(itemData);
@@ -343,7 +353,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		if (!isInView) return false;
 
 		const nailPoint = nailPoints[index];
-		const height = this.getItemHeight(index);
+		const height = this.getIndexHeight(index);
 
 		return (topEdge <= nailPoint + height) && (nailPoint <= bottomEdge);
 	};
@@ -378,7 +388,8 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
 					const index = firstIndex + i;
-					const itemID = this.getItemKey(index);
+					const itemID = this.getIndexKey(index);
+
 					return (
 						<VirtualListItem
 							key={itemID}
