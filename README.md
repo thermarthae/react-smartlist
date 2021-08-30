@@ -5,7 +5,7 @@
 [![License][license-image]][license-url]
 [![Downloads][downloads-image]][downloads-url]
 
-React helper component that uses window scrolling to render only currently visible elements.
+React helper component that uses window scrolling to render only currently visible list elements.
 
 Uses React's internal [scheduler](https://www.npmjs.com/package/scheduler) to prevent redundant rerenders and prioritize most recent scroll events.
 
