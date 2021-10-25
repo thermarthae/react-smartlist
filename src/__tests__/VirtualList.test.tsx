@@ -337,4 +337,27 @@ describe('VirtualList', () => {
 
 		expect(ItemComponent).not.toHaveBeenCalled();
 	});
+
+	it('should not crash when rerender to a shorter list', () => {
+		const {
+			rerender,
+			container,
+			queryAllByText,
+		} = render(<VirtualList {...defaultProps} items={genItemArray(500)} />);
+		const list = container.firstElementChild as HTMLElement;
+		triggerMeasurement();
+		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
+
+		const listHeight = parseInt(list.style.height, 10);
+		simulateScroll(listHeight / 2);
+		triggerMeasurement();
+		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
+
+		rerender(<VirtualList {...defaultProps} items={genItemArray(10)} />);
+		triggerMeasurement();
+		expect(queryAllByText(/ListItem/)).toHaveLength(0);
+
+		simulateScroll(0);
+		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
+	});
 });

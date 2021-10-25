@@ -6,6 +6,7 @@ import React, {
 
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
 import shallowDiffers from './shallowDiffers';
+import bendIntoArrRange from './bendIntoArrRange';
 
 export type TItemID = string | number;
 
@@ -135,9 +136,9 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 				listHeight,
 				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
 				// Fix indexes when out of bounds:
-				firstIndex: Math.min(items.length, state.firstIndex),
-				lastIndex: Math.min(items.length, state.lastIndex),
-				pivotIndex: Math.min(items.length, state.pivotIndex),
+				firstIndex: bendIntoArrRange(items, state.firstIndex),
+				lastIndex: bendIntoArrRange(items, state.lastIndex),
+				pivotIndex: bendIntoArrRange(items, state.pivotIndex),
 			};
 		}
 
@@ -197,7 +198,7 @@ class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TSta
 		const { props, state } = this;
 
 		if (props.items[0] && prevState.listHeight !== state.listHeight) {
-			const { nailPoints, pivotIndex } = prevState;
+			const { nailPoints, pivotIndex } = state;
 			const { rawTopEdge = 0 } = this.lastWindowEdges ?? {};
 
 			return {
