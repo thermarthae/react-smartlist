@@ -5,7 +5,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Jest Debug",
+			"name": "vscode-jest-tests",
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "yarn",
