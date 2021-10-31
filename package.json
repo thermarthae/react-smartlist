@@ -6,7 +6,10 @@
 	"source": "./src/index.ts",
 	"main": "./dist/index.js",
 	"module": "./dist/index.esm.js",
-	"exports": "./dist/index.modern.js",
+	"exports": {
+		"require": "./dist/index.js",
+		"default": "./dist/index.modern.js"
+	},
 	"types": "./dist/index.d.ts",
 	"sideEffects": false,
 	"packageManager": "yarn@3.1.0",
