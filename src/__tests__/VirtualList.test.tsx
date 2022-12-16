@@ -1,6 +1,5 @@
-import React from 'react';
-import { render, fireEvent } from '@testing-library/react';
-import VirtualList, { TProps as TVirtualListProps } from '../VirtualList';
+import { act, render, fireEvent } from '@testing-library/react';
+import { TProps as TVirtualListProps } from '../VirtualList';
 import { TChildrenProps } from '../VirtualListItem';
 
 type TItem = {
@@ -11,8 +10,11 @@ type TSharedProps = {
 	title?: string;
 };
 
+let React: typeof import('react');
+let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
+let VirtualList: typeof import('../VirtualList').default;
+
 jest.useFakeTimers();
-const triggerMeasurement = () => jest.advanceTimersByTime(1);
 
 describe('VirtualList', () => {
 	let itemKeyFn: jest.Mock<number, [item: TItem]>;
@@ -36,7 +38,18 @@ describe('VirtualList', () => {
 		fireEvent.scroll(document);
 	};
 
-	beforeEach(() => {
+	const triggerMeasurement = async () => act(() => {
+		jest.runAllTimers();
+		scheduler.unstable_flushAll();
+	});
+
+	beforeEach(async () => {
+		jest.resetModules();
+
+		React = await import('react');
+		scheduler = await import('scheduler') as any;
+		VirtualList = (await import('../VirtualList')).default;
+
 		itemKeyFn = jest.fn((item: TItem) => item.id);
 
 		ItemComponent = jest.fn(({
@@ -104,7 +117,7 @@ describe('VirtualList', () => {
 		expect(list.style.height).toEqual(`${estimatedListHeight}px`);
 	});
 
-	it('should measure items and update the list height', () => {
+	it('should measure items and update the list height', async () => {
 		const { container } = render(<VirtualList {...defaultProps} />);
 		const list = container.firstElementChild as HTMLElement;
 
@@ -114,20 +127,20 @@ describe('VirtualList', () => {
 		const expectedListHeight = nailPoints[expectedItemsCount]
 			+ (nailPoints.length - expectedItemsCount - 1) * estimatedItemHeight;
 
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		expect(list.childElementCount).toEqual(expectedItemsCount);
 		expect(list.style.height).toEqual(`${expectedListHeight}px`);
 		expect(estimatedListHeight).not.toEqual(expectedListHeight);
 	});
 
-	it('should handle `disableMeasurment` prop', () => {
+	it('should handle `disableMeasurment` prop', async () => {
 		const { container } = render(<VirtualList {...defaultProps} disableMeasurment />);
 		const list = container.firstElementChild as HTMLElement;
 		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= windowInnerHeight)!;
 		const expectedListHeight = defaultProps.items.length * estimatedItemHeight;
 
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		expect(list.childElementCount).toEqual(expectedItemsCount);
 		expect(list.style.height).toEqual(`${expectedListHeight}px`);
@@ -184,12 +197,12 @@ describe('VirtualList', () => {
 		expect(list.childElementCount).toEqual(expectedCount);
 	});
 
-	it('should correctly overscan when items have measured heights', () => {
+	it('should correctly overscan when items have measured heights', async () => {
 		const padding = 500;
 		const { container } = render(<VirtualList {...defaultProps} overscanPadding={padding} />);
 		const list = container.firstElementChild as HTMLElement;
 
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		const expectedCount = genNailPoints().findIndex(i => i >= (windowInnerHeight + padding))!;
 		expect(list.childElementCount).toEqual(expectedCount);
@@ -260,14 +273,14 @@ describe('VirtualList', () => {
 		expect(lastBottomItem.dataset.id).toEqual(defaultProps.items.slice(-1)[0].id.toString());
 	});
 
-	it('should correctly render when measured item is larger than viewport', () => {
+	it('should correctly render when measured item is larger than viewport', async () => {
 		const items: TItem[] = [
 			{ id: 0, height: windowInnerHeight * 2 },
 			...defaultProps.items.slice(1),
 		];
 		const { getAllByText } = render(<VirtualList {...defaultProps} items={items} />);
 
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		const renderedItems = getAllByText(/ListItem/);
 		expect(renderedItems).toHaveLength(1);
@@ -301,7 +314,7 @@ describe('VirtualList', () => {
 		testProps({ initState: { lastIndex: 3 } }, false);
 	});
 
-	it('should handle the measurement when item is no longer visible', () => {
+	it('should handle the measurement when item is no longer visible', async () => {
 		const spiedFn = jest.spyOn(VirtualList.prototype, 'render');
 		const { container, getAllByText } = render(<VirtualList {...defaultProps} />);
 		const list = container.firstElementChild as HTMLElement;
@@ -313,48 +326,48 @@ describe('VirtualList', () => {
 
 		const item = defaultProps.items[30];
 		const height = 9999;
-		measureFn({
+		await act(() => measureFn({
 			id: item.id,
 			index: item.id,
 			data: item,
 			height,
-		});
+		}));
 
 		expect(getAllByText(/ListItem/)).toEqual(firstlyRenderedItems);
 		expect(parseInt(list.style.height, 10)).toEqual(firstListHeight + height - estimatedItemHeight);
 	});
 
-	it('should not rerender when `items` array has changed without changing its actual content', () => {
+	it('should not rerender when `items` array has changed without changing its actual content', async () => {
 		let items = defaultProps.items.slice(0, 3);
 		const { rerender } = render(<VirtualList {...defaultProps} items={items} />);
-		triggerMeasurement();
+		await triggerMeasurement();
 		ItemComponent.mockClear();
 
 		items = [...items];
 		items[0] = { ...items[0] };
 		rerender(<VirtualList {...defaultProps} items={items} />);
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		expect(ItemComponent).not.toHaveBeenCalled();
 	});
 
-	it('should not crash when rerender to a shorter list', () => {
+	it('should not crash when rerender to a shorter list', async () => {
 		const {
 			rerender,
 			container,
 			queryAllByText,
 		} = render(<VirtualList {...defaultProps} items={genItemArray(500)} />);
 		const list = container.firstElementChild as HTMLElement;
-		triggerMeasurement();
+		await triggerMeasurement();
 		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
 
 		const listHeight = parseInt(list.style.height, 10);
 		simulateScroll(listHeight / 2);
-		triggerMeasurement();
+		await triggerMeasurement();
 		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
 
 		rerender(<VirtualList {...defaultProps} items={genItemArray(10)} />);
-		triggerMeasurement();
+		await triggerMeasurement();
 		expect(queryAllByText(/ListItem/)).toHaveLength(0);
 
 		simulateScroll(0);

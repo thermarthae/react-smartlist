@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-import React from 'react';
-import { render } from '@testing-library/react';
-import {
-	unstable_LowPriority as LowPriority,
-	unstable_UserBlockingPriority as UserBlockingPriority,
-} from 'scheduler';
+import { act, render } from '@testing-library/react';
 
 import { TEntry } from '../VirtualList';
 import {
@@ -12,14 +7,16 @@ import {
 	TChildrenProps,
 } from '../VirtualListItem';
 
-type TScheduler = typeof import('scheduler');
 type TItem = { id: number };
 
-jest.useFakeTimers();
-const triggerMeasurement = () => jest.advanceTimersByTime(1);
-
-let getFirstCallbackNode: TScheduler['unstable_getFirstCallbackNode'];
+let React: typeof import('react');
+let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
+let getFirstCallbackNode: typeof scheduler.unstable_getFirstCallbackNode;
+let LowPriority: typeof scheduler.unstable_LowPriority;
+let UserBlockingPriority: typeof scheduler.unstable_UserBlockingPriority;
 let VirtualListItem: typeof import('../VirtualListItem').default;
+
+jest.useFakeTimers();
 
 describe('VirtualListItem', () => {
 	let onMeasureFn: jest.Mock<void, [item: TEntry<TItem>]>;
@@ -28,11 +25,19 @@ describe('VirtualListItem', () => {
 	}]>;
 	let defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent>;
 
+	const triggerMeasurement = async () => act(() => {
+		jest.runAllTimers();
+		scheduler.unstable_flushAll();
+	});
+
 	beforeEach(async () => {
 		jest.resetModules();
 
-		const Scheduler = await import('scheduler');
-		getFirstCallbackNode = Scheduler.unstable_getFirstCallbackNode;
+		React = await import('react');
+		scheduler = await import('scheduler') as any;
+		getFirstCallbackNode = scheduler.unstable_getFirstCallbackNode;
+		LowPriority = scheduler.unstable_LowPriority;
+		UserBlockingPriority = scheduler.unstable_UserBlockingPriority;
 
 		VirtualListItem = (await import('../VirtualListItem')).default;
 
@@ -72,12 +77,12 @@ describe('VirtualListItem', () => {
 		expect(container.firstChild).toMatchSnapshot();
 	});
 
-	it('should attach observers with correct priorities', () => {
+	it('should attach observers with correct priorities', async () => {
 		// first render has an UserBlockingPriority:
 		render(<VirtualListItem {...defaultProps} />);
 		expect(getFirstCallbackNode()?.priorityLevel).toBe(UserBlockingPriority);
 
-		triggerMeasurement();
+		await triggerMeasurement();
 
 		// everything except the first render has LowPriority:
 		render(<VirtualListItem {...defaultProps} itWasMeasured />);
@@ -105,23 +110,23 @@ describe('VirtualListItem', () => {
 		expect(getFirstCallbackNode()?.callback).toBeNull();
 	});
 
-	it('should not trigger the onMeasure event when height is equal to 0', () => {
+	it('should not trigger the onMeasure event when height is equal to 0', async () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 0 }} />);
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		triggerMeasurement();
+		await triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).not.toBeCalled();
 	});
 
-	it('should trigger the onMeasure event', () => {
+	it('should trigger the onMeasure event', async () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 1 }} />);
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		triggerMeasurement();
+		await triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
