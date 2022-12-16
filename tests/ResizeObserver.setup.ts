@@ -17,7 +17,7 @@ class ResizeObserverHack implements ResizeObserver {
 			borderBoxSize: [{ blockSize: height }],
 		};
 
-		this.callback([entry as any], null as never);
+		this.callback([entry as any as ResizeObserverEntry], null as never);
 	}
 }
 
