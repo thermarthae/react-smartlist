@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	testEnvironment: 'jsdom',
 	setupFiles: [
 		'./tests/ResizeObserver.setup.ts',
