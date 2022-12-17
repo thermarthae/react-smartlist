@@ -33,7 +33,7 @@ export type TEntry<Item> = {
 
 //
 
-export type TProps<I = unknown, C extends ElementType = ElementType> = {
+export type TProps<I extends object = object, C extends ElementType = ElementType> = {
 	/**
 	 * Your component that is used to render a single list item.
 	 */
@@ -97,7 +97,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	disableMeasurment?: boolean;
 };
 
-type TState<I = unknown> = {
+type TState<I extends object = object> = {
 	/** @ignore */
 	memoizedItemsArray: readonly I[];
 	heightCache: Map<TItemID, number>;
@@ -110,7 +110,7 @@ type TState<I = unknown> = {
 	pivotIndex: number;
 };
 
-class VirtualList<I, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
+class VirtualList<I extends object, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
 	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight, itemKey } = props;

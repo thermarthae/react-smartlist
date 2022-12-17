@@ -16,7 +16,7 @@ import { TItemID, TEntry } from './VirtualList';
 import shallowDiffers from './shallowDiffers';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement> = {
+export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {
 	innerRef: React.Ref<Ref>;
 	data: Item;
 	itWasMeasured: boolean;
@@ -32,7 +32,7 @@ export type TChildrenProps<Item = unknown, Ref extends HTMLElement = HTMLElement
 	};
 };
 
-export type TProps<I = unknown, C extends ElementType = ElementType> = {
+export type TProps<I extends object = object, C extends ElementType = ElementType> = {
 	component: C;
 	itemID: TItemID;
 	itemData: I;
@@ -44,7 +44,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 	isMeasurmentDisabled?: boolean;
 };
 
-class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> {
+class VirtualListItem<I extends object, C extends ElementType> extends Component<TProps<I, C>> {
 	private readonly itemElRef = createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;

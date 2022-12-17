@@ -1,4 +1,4 @@
-function shallowDiffers<T extends Record<string, any>>(objA?: T, objB?: T) {
+function shallowDiffers<T extends object>(objA?: T, objB?: T) {
 	if (objA === objB) return false;
 
 	if (typeof objA !== typeof objB) return true;
