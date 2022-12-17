@@ -4,6 +4,11 @@
 		"module": "ESNext",
 		"moduleResolution": "node",
 		"jsx": "react",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"strict": true,
