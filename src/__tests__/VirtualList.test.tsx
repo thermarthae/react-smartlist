@@ -1,3 +1,10 @@
+import {
+	jest,
+	describe,
+	beforeEach,
+	it,
+	expect,
+} from '@jest/globals';
 import { act, render, fireEvent } from '@testing-library/react';
 import { TProps as TVirtualListProps } from '../VirtualList';
 import { TChildrenProps } from '../VirtualListItem';
@@ -17,8 +24,8 @@ let VirtualList: typeof import('../VirtualList').default;
 jest.useFakeTimers();
 
 describe('VirtualList', () => {
-	let itemKeyFn: jest.Mock<number, [item: TItem]>;
-	let ItemComponent: jest.Mock<JSX.Element, [TChildrenProps<TItem, HTMLDivElement> & TSharedProps]>;
+	let itemKeyFn: jest.Mock<(item: TItem) => number>;
+	let ItemComponent: jest.Mock<React.FunctionComponent<TChildrenProps<TItem, HTMLDivElement> & TSharedProps>>;
 	let defaultProps: TVirtualListProps<TItem>;
 	let estimatedNailPoints: number[];
 

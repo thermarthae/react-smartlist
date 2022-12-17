@@ -1,4 +1,10 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+import {
+	jest,
+	describe,
+	beforeEach,
+	it,
+	expect,
+} from '@jest/globals';
 import { act, render } from '@testing-library/react';
 
 import { TEntry } from '../VirtualList';
@@ -19,10 +25,10 @@ let VirtualListItem: typeof import('../VirtualListItem').default;
 jest.useFakeTimers();
 
 describe('VirtualListItem', () => {
-	let onMeasureFn: jest.Mock<void, [item: TEntry<TItem>]>;
-	let ItemComponent: jest.Mock<JSX.Element, [TChildrenProps<TItem, HTMLDivElement> & {
+	let onMeasureFn: jest.Mock<(item: TEntry<TItem>) => void>;
+	let ItemComponent: jest.Mock<React.FunctionComponent<TChildrenProps<TItem, HTMLDivElement> & {
 		height?: number;
-	}]>;
+	}>>;
 	let defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent>;
 
 	const triggerMeasurement = async () => act(() => {
