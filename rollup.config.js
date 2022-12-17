@@ -7,6 +7,7 @@ import pkg from './package.json' assert { type: 'json' };
 const commonConfig = {
 	input: './src/index.ts',
 	external: [
+		'react/jsx-runtime',
 		...Object.keys(pkg.dependencies),
 		...Object.keys(pkg.peerDependencies),
 	],

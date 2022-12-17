@@ -1,7 +1,8 @@
-import React, {
+import {
 	ElementType,
 	Component,
 	createElement,
+	createRef,
 } from 'react';
 import {
 	CallbackNode,
@@ -44,7 +45,7 @@ export type TProps<I = unknown, C extends ElementType = ElementType> = {
 };
 
 class VirtualListItem<I, C extends ElementType> extends Component<TProps<I, C>> {
-	private readonly itemElRef = React.createRef<HTMLElement>();
+	private readonly itemElRef = createRef<HTMLElement>();
 
 	private resizeObserver: ResizeObserver | null = null;
 

@@ -1,4 +1,4 @@
-import React, {
+import {
 	ElementType,
 	Component,
 	createRef,
