@@ -10,9 +10,9 @@ import bendIntoArrRange from './bendIntoArrRange';
 
 export type TItemID = string | number;
 
-type TEdges = {
-	bottomEdge: number;
+type TWindowEdges = {
 	topEdge: number;
+	bottomEdge: number;
 	rawTopEdge: number;
 	scrollDiff: number;
 	isInView: boolean;
@@ -174,7 +174,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 
 	private readonly listElRef = createRef<HTMLDivElement>();
 
-	private lastWindowEdges: TEdges | null = null;
+	private lastWindowEdges: TWindowEdges | null = null;
 
 	public componentDidMount() {
 		document.addEventListener('scroll', this.handleScroll);
@@ -275,7 +275,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		document.documentElement.scrollTop = newScrollTop;
 	};
 
-	private readonly getWindowEdges = (): TEdges => {
+	private readonly getWindowEdges = (): TWindowEdges => {
 		if (!this.listElRef.current) throw new Error('Bug! No list ref');
 		const { offsetTop, scrollHeight } = this.listElRef.current;
 		const { overscanPadding = 20 } = this.props;
@@ -291,9 +291,10 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 
 		const scrollDiff = rawTopEdge - (this.lastWindowEdges?.rawTopEdge ?? rawTopEdge);
 
-		const edges = {
-			bottomEdge,
+
+		const edges: TWindowEdges = {
 			topEdge,
+			bottomEdge,
 			rawTopEdge,
 			scrollDiff,
 			isInView: bottomEdge !== topEdge,
