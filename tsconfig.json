@@ -23,11 +23,12 @@
 		"allowJs": true,
 		"checkJs": true,
 		"resolveJsonModule": true,
+		"noEmit": true,
 	},
-	"exclude": [
-		".vscode",
-		"./.yarn",
-		"./dist",
-		".pnp.js",
-	],
+	"include": [
+		"./src",
+		"./.eslintrc.cjs",
+		"./jest.config.js",
+		"./rollup.config.js",
+	]
 }
