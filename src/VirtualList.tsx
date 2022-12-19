@@ -278,9 +278,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	private readonly getWindowEdges = (): TEdges => {
 		if (!this.listElRef.current) throw new Error('Bug! No list ref');
 		const { offsetTop, scrollHeight } = this.listElRef.current;
-		const {
-			overscanPadding = 10,
-		} = this.props;
+		const { overscanPadding = 20 } = this.props;
 
 		const rawTopEdge = (document.documentElement.scrollTop - offsetTop);
 		const rawBottomEdge = (rawTopEdge + window.innerHeight);
