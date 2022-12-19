@@ -6,7 +6,7 @@ import {
 
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
 import shallowDiffers from './shallowDiffers';
-import bendIntoArrRange from './bendIntoArrRange';
+import clampIntoArrRange from './clampIntoArrRange';
 
 export type TItemID = string | number;
 
@@ -136,9 +136,9 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 				listHeight,
 				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
 				// Fix indexes when out of bounds:
-				firstIndex: bendIntoArrRange(items, state.firstIndex),
-				lastIndex: bendIntoArrRange(items, state.lastIndex),
-				pivotIndex: bendIntoArrRange(items, state.pivotIndex),
+				firstIndex: clampIntoArrRange(items, state.firstIndex),
+				lastIndex: clampIntoArrRange(items, state.lastIndex),
+				pivotIndex: clampIntoArrRange(items, state.pivotIndex),
 			};
 		}
 
