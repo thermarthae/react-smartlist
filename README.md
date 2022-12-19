@@ -83,17 +83,17 @@ ReactDOM.render(<App />, rootElement);
 
 ## Props
 
-| Name                    | Type                         | Default   | Required | Description |
-| ----------------------- | ---------------------------- | --------- | -------- | ----------- |
-| **component**           | `React.ElementType`          | undefined | true     | Your component that is used to render a single list item. |
-| **items**               | `unknown[]`                  | undefined | true     | An array of actual data mapped to all children. |
-| **estimatedItemHeight** | `number`                     | undefined | true     | The estimated height of a single rendered item.<br /><br />In a best-case scenario, the same as actual item height.<br /><br />Every item has its dimensions that are being used to calculate the height of a whole list. Thanks to that, the browser can allocate necessary space and display the scrollbars. It creates an illusion that all elements are present and visible at the same time.<br /><br />But how can we know the dimensions of an actual item before the initial render? Well, we don't. That's where `estimatedItemHeight` kicks in. We use a placeholder to compute all necessary values, then when the actual items are rendered, we measure them and repeats all calculations. |
-| **itemKey**             | `(item) => number \| string` | undefined | true     | A factory function that returns (extracts) an ID from the item.<br /><br />Every item in the list must be identified by its unique ID.<br /><br />Remember that this function will be called many times, so any fancy function may negatively affect your rendering performance. |
-| **overscanPadding**     | `number`                     | 20        | false    | This value increases the overall viewport area. Defines how many pixels *beyond the horizon* should be overscaned.<br /><br />In other words, this is a value that allows you to render more elements than can be actually seen on the screen. |
-| **className**           | `string`                     | undefined | false    | Custom CSS classname attached to a `VirtualList` root element. |
-| **sharedProps**         | `Object`                     | undefined | false    | Props passed to every rendered item. |
-| **initState**           | `Object`                     | undefined | false    | An advanced prop that can be used to overwrite the initial `VirtualList` state. Proceed with caution. |
-| **disableMeasurment**   | `boolean`                    | false     | false    | Disables the item measurements and sets `estimatedItemHeight` as an actual element height.<br /><br />Useful when your list consists of items with equal heights. |
+| Name                    | Description |
+| ----------------------- | ----------- |
+| **component**           | Your component that is used to render a single list item. |
+| **items**               | An array of actual data mapped to all children. |
+| **estimatedItemHeight** | The estimated height of a single rendered item.<br /><br />In a best-case scenario, the same as actual item height.<br /><br />Every item has its dimensions that are being used to calculate the height of a whole list. Thanks to that, the browser can allocate necessary space and display the scrollbars. It creates an illusion that all elements are present and visible at the same time.<br /><br />But how can we know the dimensions of an actual item before the initial render? Well, we don't. That's where `estimatedItemHeight` kicks in. We use a placeholder to compute all necessary values, then when the actual items are rendered, we measure them and repeats all calculations. |
+| **itemKey**             | A factory function that returns (extracts) an ID from the item.<br /><br />Every item in the list must be identified by its unique ID.<br /><br />Remember that this function will be called many times, so any fancy function may negatively affect your rendering performance. |
+| **overscanPadding**     | This value increases the overall viewport area. Defines how many pixels *beyond the horizon* should be overscaned.<br /><br />In other words, this is a value that allows you to render more elements than can be actually seen on the screen. |
+| **className**           | Custom CSS classname attached to a `VirtualList` root element. |
+| **sharedProps**         | Props passed to every rendered item. |
+| **initState**           | An advanced prop that can be used to overwrite the initial `VirtualList` state. Proceed with caution. |
+| **disableMeasurment**   | Disables the item measurements and sets `estimatedItemHeight` as an actual element height.<br /><br />Useful when your list consists of items with equal heights. |
 
 ## License
 
