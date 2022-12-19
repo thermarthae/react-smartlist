@@ -14,6 +14,8 @@ export type TWindowEdges = {
 	topEdge: number;
 	bottomEdge: number;
 	rawTopEdge: number;
+	rawBottomEdge: number;
+	listScrollHeight: number;
 	scrollDiff: number;
 	isInView: boolean;
 };
@@ -305,6 +307,8 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			topEdge,
 			bottomEdge,
 			rawTopEdge,
+			rawBottomEdge,
+			listScrollHeight: scrollHeight,
 			scrollDiff,
 			isInView: bottomEdge !== topEdge,
 		};
