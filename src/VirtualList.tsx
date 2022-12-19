@@ -10,7 +10,7 @@ import clampIntoArrRange from './clampIntoArrRange';
 
 export type TItemID = string | number;
 
-type TWindowEdges = {
+export type TWindowEdges = {
 	topEdge: number;
 	bottomEdge: number;
 	rawTopEdge: number;
@@ -95,6 +95,12 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	 * Useful when your list consists of items with equal heights.
 	 */
 	disableMeasurment?: boolean;
+	/**
+	 * Function invoked at the scroll event.
+	 *
+	 * Keep this function as performant as possible.
+	 */
+	onScroll?: (windowEdges: TWindowEdges) => void;
 };
 
 type TState<I extends object = object> = {
@@ -230,7 +236,10 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		if (!this.props.items[0]) return;
 
 		const { state } = this;
-		const { isInView, topEdge } = this.getWindowEdges();
+		const edges = this.getWindowEdges();
+		const { isInView, topEdge } = edges;
+
+		this.props.onScroll?.(edges);
 
 		if (isInView) {
 			const next = this.getVisibleItems();

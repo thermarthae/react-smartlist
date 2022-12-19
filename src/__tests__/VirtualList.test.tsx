@@ -260,6 +260,17 @@ describe('VirtualList', () => {
 		expect(queryAllByText(/ListItem/)).toEqual([]);
 	});
 
+	it('should invoke the `onScroll` event function', () => {
+		const scrollHandler = jest.fn();
+		render(<VirtualList {...defaultProps} onScroll={scrollHandler} />);
+
+		scrollHandler.mockClear();
+
+		expect(scrollHandler).not.toBeCalled();
+		simulateScroll(100);
+		expect(scrollHandler).toBeCalledTimes(1);
+	});
+
 	it('should handle instant top/bottom scrolling', () => {
 		const { getAllByText, container } = render(<VirtualList {...defaultProps} />);
 		const list = container.firstElementChild as HTMLElement;

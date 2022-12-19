@@ -94,6 +94,7 @@ ReactDOM.render(<App />, rootElement);
 | **sharedProps**         | Props passed to every rendered item. |
 | **initState**           | An advanced prop that can be used to overwrite the initial `VirtualList` state. Proceed with caution. |
 | **disableMeasurment**   | Disables the item measurements and sets `estimatedItemHeight` as an actual element height.<br /><br />Useful when your list consists of items with equal heights. |
+| **onScroll**             | Function invoked at the scroll event.<br /><br />Keep this function as performant as possible. |
 
 ## License
 
