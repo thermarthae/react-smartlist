@@ -20,7 +20,7 @@
 		}
 	},
 	"sideEffects": false,
-	"packageManager": "yarn@3.3.0",
+	"packageManager": "yarn@3.3.1",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/thermarthae/react-smartlist.git"
@@ -68,7 +68,7 @@
 		"@types/scheduler": "^0.16.2",
 		"@typescript-eslint/eslint-plugin": "^5.46.1",
 		"@typescript-eslint/parser": "^5.46.1",
-		"eslint": "^8.29.0",
+		"eslint": "^8.31.0",
 		"eslint-plugin-import": "^2.26.0",
 		"eslint-plugin-jsx-a11y": "^6.6.1",
 		"eslint-plugin-react": "^7.31.11",
@@ -77,9 +77,9 @@
 		"jest-environment-jsdom": "^29.3.1",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"rollup": "^3.7.5",
-		"rollup-plugin-dts": "^5.0.0",
+		"rollup": "^3.9.1",
+		"rollup-plugin-dts": "^5.1.1",
 		"rollup-plugin-swc3": "^0.8.0",
-		"typescript": "4.9.3"
+		"typescript": "^4.9.4"
 	}
 }
