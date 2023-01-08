@@ -1,6 +1,6 @@
 {
 	"name": "@thermarthae/react-smartlist",
-	"version": "0.0.0-experimental.6",
+	"version": "2.0.0",
 	"license": "MIT",
 	"author": "thermarthae <thermarthae@protonmail.com>",
 	"type": "module",
