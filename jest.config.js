@@ -1,3 +1,4 @@
+/** @type { import('jest').Config} */
 export default {
 	testEnvironment: 'jsdom',
 	setupFiles: [
@@ -5,6 +6,8 @@ export default {
 		'./tests/SchedulerMock.setup.ts',
 	],
 	transform: {
-		'^.+\\.(t|j)sx?$': ['@swc/jest'],
+		'^.+\\.(t|j)sx?$': ['@swc/jest', {
+			sourceMaps: 'inline',
+		}],
 	},
 };
