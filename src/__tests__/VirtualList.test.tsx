@@ -44,7 +44,7 @@ describe('VirtualList', () => {
 	const genNailPoints = (arr = defaultProps.items) => arr.reduce(
 		(prev, item, i) => [...prev, prev[i] + item.height],
 		[0],
-	);
+	).slice(0, arr.length);
 	const simulateScroll = (scrollOffset: number) => {
 		document.documentElement.scrollTop = scrollOffset;
 		fireEvent.scroll(document);
@@ -137,7 +137,7 @@ describe('VirtualList', () => {
 		const estimatedListHeight = parseInt(list.style.height, 10);
 		const expectedItemsCount = nailPoints.findIndex(i => i >= windowInnerHeight)!;
 		const expectedListHeight = nailPoints[expectedItemsCount]
-			+ (nailPoints.length - expectedItemsCount - 1) * estimatedItemHeight;
+			+ (nailPoints.length - expectedItemsCount) * estimatedItemHeight;
 
 		triggerMeasurement();
 
