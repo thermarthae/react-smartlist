@@ -20,7 +20,9 @@
 			"disableOptimisticBPs": true,
 			"skipFiles": [
 				"<node_internals>/**",
-				"${workspaceFolder}/.yarn/**",
+				"**/node_modules/**",
+				"${workspaceFolder}/.yarn/__virtual__/**",
+				"${workspaceFolder}/.yarn/cache/**",
 				"${workspaceFolder}/**/.pnp.*",
 			],
 		}
