@@ -3,9 +3,9 @@ import {
 	createRef,
 	ElementType,
 } from 'react';
+import { shallowEqualObjects } from 'shallow-equal';
 
 import clampIntoArrRange from './clampIntoArrRange';
-import shallowDiffers from './shallowDiffers';
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
 
 export type TItemID = string | number;
@@ -196,10 +196,10 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			const { initState: a, ...prevRest } = this.props;
 			const { initState: b, ...nextRest } = nextProps;
 
-			if (shallowDiffers(prevRest, nextRest)) return true;
+			if (!shallowEqualObjects(prevRest, nextRest)) return true;
 		}
 
-		return shallowDiffers(this.state, nextState);
+		return !shallowEqualObjects(this.state, nextState);
 	}
 
 	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>): TAnchor | null {

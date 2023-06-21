@@ -11,8 +11,8 @@ import {
 	unstable_scheduleCallback as scheduleCallback,
 	unstable_UserBlockingPriority as UserBlockingPriority,
 } from 'scheduler';
+import { shallowEqualObjects } from 'shallow-equal';
 
-import shallowDiffers from './shallowDiffers';
 import { TEntry, TItemID } from './VirtualList';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
@@ -61,9 +61,9 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 			const { itemData: nextData, sharedProps: nextSP, ...nextRest } = nextProps;
 
 			if (
-				shallowDiffers(prevRest, nextRest)
-				|| shallowDiffers(data, nextData)
-				|| shallowDiffers(SP, nextSP)
+				!shallowEqualObjects(prevRest, nextRest)
+				|| !shallowEqualObjects(data, nextData)
+				|| !shallowEqualObjects(SP, nextSP)
 			) return true;
 		}
 
