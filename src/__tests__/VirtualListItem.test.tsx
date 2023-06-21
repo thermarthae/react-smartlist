@@ -34,7 +34,7 @@ describe('VirtualListItem', () => {
 	}>>;
 	let defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent>;
 
-	const triggerMeasurement = async () => act(() => {
+	const triggerMeasurement = () => act(() => {
 		jest.runAllTimers();
 		scheduler.unstable_flushAll();
 	});
@@ -86,12 +86,12 @@ describe('VirtualListItem', () => {
 		expect(container.firstChild).toMatchSnapshot();
 	});
 
-	it('should attach observers with correct priorities', async () => {
+	it('should attach observers with correct priorities', () => {
 		// first render has an UserBlockingPriority:
 		render(<VirtualListItem {...defaultProps} />);
 		expect(getFirstCallbackNode()?.priorityLevel).toBe(UserBlockingPriority);
 
-		await triggerMeasurement();
+		triggerMeasurement();
 
 		// everything except the first render has LowPriority:
 		render(<VirtualListItem {...defaultProps} itWasMeasured />);
@@ -119,23 +119,23 @@ describe('VirtualListItem', () => {
 		expect(getFirstCallbackNode()?.callback).toBeNull();
 	});
 
-	it('should not trigger the onMeasure event when height is equal to 0', async () => {
+	it('should not trigger the onMeasure event when height is equal to 0', () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 0 }} />);
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		await triggerMeasurement();
+		triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).not.toBeCalled();
 	});
 
-	it('should trigger the onMeasure event', async () => {
+	it('should trigger the onMeasure event', () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 1 }} />);
 
 		// give a scheduler some time to attach the listener
 		expect(getFirstCallbackNode()).not.toBeNull();
-		await triggerMeasurement();
+		triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
