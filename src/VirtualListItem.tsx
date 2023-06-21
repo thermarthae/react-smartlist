@@ -1,19 +1,19 @@
 import {
-	ElementType,
 	Component,
 	createElement,
 	createRef,
+	ElementType,
 } from 'react';
 import {
 	CallbackNode,
-	unstable_scheduleCallback as scheduleCallback,
 	unstable_cancelCallback as cancelCallback,
-	unstable_UserBlockingPriority as UserBlockingPriority,
 	unstable_LowPriority as LowPriority,
+	unstable_scheduleCallback as scheduleCallback,
+	unstable_UserBlockingPriority as UserBlockingPriority,
 } from 'scheduler';
 
-import { TItemID, TEntry } from './VirtualList';
 import shallowDiffers from './shallowDiffers';
+import { TEntry, TItemID } from './VirtualList';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {

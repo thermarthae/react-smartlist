@@ -1,12 +1,12 @@
 import {
-	ElementType,
 	Component,
 	createRef,
+	ElementType,
 } from 'react';
 
-import VirtualListItem, { TSharedProps } from './VirtualListItem';
-import shallowDiffers from './shallowDiffers';
 import clampIntoArrRange from './clampIntoArrRange';
+import shallowDiffers from './shallowDiffers';
+import VirtualListItem, { TSharedProps } from './VirtualListItem';
 
 export type TItemID = string | number;
 

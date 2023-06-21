@@ -1,11 +1,16 @@
 import {
-	jest,
-	describe,
+	act,
+	fireEvent,
+	render,
+} from '@testing-library/react';
+import {
 	beforeEach,
-	it,
+	describe,
 	expect,
+	it,
+	jest,
 } from '@jest/globals';
-import { act, render, fireEvent } from '@testing-library/react';
+
 import { TProps as TVirtualListProps } from '../VirtualList';
 import { TChildrenProps } from '../VirtualListItem';
 
@@ -17,7 +22,7 @@ type TSharedProps = {
 	title?: string;
 };
 
-let React: typeof import('react');
+let React: typeof import('react'); // eslint-disable-line @typescript-eslint/no-unused-vars
 let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
 let VirtualList: typeof import('../VirtualList').default;
 

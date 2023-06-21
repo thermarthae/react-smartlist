@@ -1,21 +1,24 @@
 import {
-	jest,
-	describe,
+	act,
+	render,
+} from '@testing-library/react';
+import {
 	beforeEach,
-	it,
+	describe,
 	expect,
+	it,
+	jest,
 } from '@jest/globals';
-import { act, render } from '@testing-library/react';
 
 import { TEntry } from '../VirtualList';
 import {
-	TProps as TVirtualListItemProps,
 	TChildrenProps,
+	TProps as TVirtualListItemProps,
 } from '../VirtualListItem';
 
 type TItem = { id: number };
 
-let React: typeof import('react');
+let React: typeof import('react'); // eslint-disable-line @typescript-eslint/no-unused-vars
 let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
 let getFirstCallbackNode: typeof scheduler.unstable_getFirstCallbackNode;
 let LowPriority: typeof scheduler.unstable_LowPriority;
