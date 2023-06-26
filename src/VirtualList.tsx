@@ -20,12 +20,6 @@ export type TWindowEdges = {
 	isInView: boolean;
 };
 
-type TAnchor = {
-	index: number;
-	offset: number;
-	height: number;
-};
-
 export type TEntry<Item> = {
 	id: TItemID;
 	index: number;
@@ -202,30 +196,9 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		return !shallowEqualObjects(this.state, nextState);
 	}
 
-	public getSnapshotBeforeUpdate(_prevProps: TProps<I, C>, prevState: TState<I>): TAnchor | null {
-		const { props, state } = this;
-
-		if (props.items[0] && prevState.listHeight !== state.listHeight) {
-			const { nailPoints, pivotIndex } = state;
-			const { rawTopEdge = 0 } = this.lastWindowEdges ?? {};
-
-			return {
-				index: pivotIndex,
-				offset: rawTopEdge - nailPoints[pivotIndex],
-				height: this.getIndexHeight(pivotIndex),
-			};
-		}
-
-		return null;
-	}
-
-	public componentDidUpdate(prevProps: TProps<I, C>, _prevState: TState<I>, snapshot?: TAnchor) {
+	public componentDidUpdate(prevProps: TProps<I, C>) {
 		if (prevProps !== this.props) {
 			this.handleScroll();
-		}
-
-		if (snapshot) {
-			this.handleListHeightChange(snapshot);
 		}
 	}
 
@@ -264,26 +237,6 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 				this.setState({ isInView, pivotIndex });
 			}
 		}
-	};
-
-	private readonly handleListHeightChange = (anchor: TAnchor) => {
-		const listEl = this.listElRef.current;
-		if (!listEl) return;
-
-		const { nailPoints } = this.state;
-		const {
-			index,
-			offset,
-			height,
-		} = anchor;
-		const { offsetTop } = listEl;
-		const nailPoint = nailPoints[index];
-		const currentHeight = this.getIndexHeight(index);
-
-		const newScrollTop = offsetTop + nailPoint + ((offset - height) + currentHeight);
-		if (newScrollTop <= offsetTop) return;
-
-		document.documentElement.scrollTop = newScrollTop;
 	};
 
 	private readonly getWindowEdges = (): TWindowEdges => {
@@ -351,7 +304,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		const isInView = firstIndex !== null && lastIndex !== null;
 		firstIndex ??= state.firstIndex;
 		lastIndex ??= state.lastIndex;
-		pivotIndex ??= state.pivotIndex;
+		pivotIndex ??= Math.min(Math.max(firstIndex, state.pivotIndex), lastIndex);
 
 		return {
 			isInView,
@@ -364,6 +317,8 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	private readonly handleMeasure = (entry: TEntry<I>) => {
 		this.setState((state, { items }) => {
 			if (state.heightCache.get(entry.id) === entry.height) return null;
+
+			const prevPivotHeight = this.getIndexHeight(state.pivotIndex);
 
 			// To update the height of an item, we are *mutating* the `heightCache` map.
 			// Unluckily, React will not detect our direct change.
@@ -383,6 +338,15 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			}
 
 			const listHeight = nailPoints[arrLastIndex] + this.getIndexHeight(arrLastIndex);
+
+			// If the list shrinks, offset the difference to prevent the content from scrolling up.
+			if (listHeight < state.listHeight) {
+				const prevItemEdge = state.nailPoints[state.pivotIndex] + prevPivotHeight;
+				const nextItemEdge = nailPoints[state.pivotIndex] + this.getIndexHeight(state.pivotIndex);
+
+				document.documentElement.scrollTop -= prevItemEdge - nextItemEdge;
+				this.getWindowEdges();
+			}
 
 			return {
 				...state,

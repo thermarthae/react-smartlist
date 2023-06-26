@@ -396,4 +396,42 @@ describe('VirtualList', () => {
 		simulateScroll(0);
 		expect(queryAllByText(/ListItem/)).not.toHaveLength(0);
 	});
+
+	it('should handle items that shrink above the viewport', () => {
+		const height = 100;
+		const estimatedHeight = 1000;
+		const items = [...Array(500)].map((_, id) => ({ id, height }));
+		const docEl = document.documentElement;
+
+		// init one pixel below the last item
+		simulateScroll(items.length * estimatedHeight + 1);
+		const { queryAllByText } = render(
+			<VirtualList
+				{...defaultProps}
+				items={items}
+				estimatedItemHeight={estimatedHeight}
+			/>,
+		);
+		expect(queryAllByText('ListItem')).toEqual([]);
+		triggerMeasurement();
+		expect(queryAllByText('ListItem')).toEqual([]);
+
+		// scroll one pixel up to render the last item only
+		simulateScroll(docEl.scrollTop - 1);
+		const oneLastBefore = queryAllByText('ListItem').map(i => i.dataset.id);
+		expect(oneLastBefore).toEqual(['499']);
+
+		triggerMeasurement();
+		const oneLastAfter = queryAllByText('ListItem').map(i => i.dataset.id);
+		expect(oneLastAfter).toEqual(oneLastBefore);
+
+		// scroll one item up to render last 2 items
+		simulateScroll(docEl.scrollTop - height);
+		const twoLastBefore = queryAllByText('ListItem').map(i => i.dataset.id);
+		expect(twoLastBefore).toEqual(['498', '499']);
+
+		triggerMeasurement();
+		const twoLastAfter = queryAllByText('ListItem').map(i => i.dataset.id);
+		expect(twoLastAfter).toEqual(twoLastBefore);
+	});
 });
