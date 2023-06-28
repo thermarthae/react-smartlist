@@ -108,7 +108,6 @@ type TState<I extends object = object> = {
 	listHeight: number;
 	firstIndex: number;
 	lastIndex: number;
-	pivotIndex: number;
 };
 
 class VirtualList<I extends object, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
@@ -139,7 +138,6 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 				// Fix indexes when out of bounds:
 				firstIndex: clampIntoArrRange(items, state.firstIndex),
 				lastIndex: clampIntoArrRange(items, state.lastIndex),
-				pivotIndex: clampIntoArrRange(items, state.pivotIndex),
 			};
 		}
 
@@ -168,7 +166,6 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			listHeight: items.length * estimatedItemHeight,
 			firstIndex: 0,
 			lastIndex: 0,
-			pivotIndex: 0,
 			...initState,
 		};
 	})();
@@ -206,12 +203,14 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		window.removeEventListener('resize', this.handleScroll);
 	}
 
+	private readonly getPivot = (s = this.state) => s.firstIndex + Math.round((s.lastIndex - s.firstIndex) / 2);
+
 	private readonly handleScroll = () => {
 		if (!this.props.items[0]) return;
 
 		const { state } = this;
 		const edges = this.getWindowEdges();
-		const { isInView, topEdge } = edges;
+		const { isInView } = edges;
 
 		this.props.onScroll?.(edges);
 
@@ -223,19 +222,9 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			if (
 				next.firstIndex !== state.firstIndex
 				|| next.lastIndex !== state.lastIndex
-				|| next.pivotIndex !== state.pivotIndex
 				|| next.isInView !== state.isInView
 			) this.setState(next);
-		} else {
-			let pivotIndex = 0;
-			if (topEdge !== 0) pivotIndex = this.props.items.length - 1;
-
-			// Bailout if a state doesn't require an update to prevent empty render commit.
-			// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-			if (isInView !== state.isInView || pivotIndex !== state.pivotIndex) {
-				this.setState({ isInView, pivotIndex });
-			}
-		}
+		} else if (isInView !== state.isInView) this.setState({ isInView });
 	};
 
 	private readonly getWindowEdges = (): TWindowEdges => {
@@ -268,11 +257,10 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	private readonly getVisibleItems = (nailPoints?: number[]) => {
 		const { items } = this.props;
 		const { state } = this;
-		const { heightCache, pivotIndex: oldPivot } = state;
+		const pivot = this.getPivot();
 
 		let firstIndex: null | number = null;
 		let lastIndex: null | number = null;
-		let pivotIndex: null | number = null;
 
 		// returns `true` when a for loop should break
 		const scanIndex = (i: number) => {
@@ -286,26 +274,23 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 				firstIndex = i;
 				lastIndex = i;
 			}
-			if (pivotIndex === null && heightCache.has(this.getIndexKey(i))) pivotIndex = i;
 		};
 
-		for (let i = oldPivot; i >= 0; i -= 1) {
+		for (let i = pivot; i >= 0; i -= 1) {
 			if (scanIndex(i)) break;
 		}
-		for (let i = oldPivot + 1; i < items.length; i += 1) {
+		for (let i = pivot + 1; i < items.length; i += 1) {
 			if (scanIndex(i)) break;
 		}
 
 		const isInView = firstIndex !== null && lastIndex !== null;
 		firstIndex ??= state.firstIndex;
 		lastIndex ??= state.lastIndex;
-		pivotIndex ??= Math.min(Math.max(firstIndex, state.pivotIndex), lastIndex);
 
 		return {
 			isInView,
 			firstIndex,
 			lastIndex,
-			pivotIndex,
 		};
 	};
 
@@ -313,7 +298,8 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		this.setState((state, { items }) => {
 			if (state.heightCache.get(entry.id) === entry.height) return null;
 
-			const prevPivotHeight = this.getIndexHeight(state.pivotIndex);
+			const pivot = this.getPivot();
+			const prevPivotHeight = this.getIndexHeight(pivot);
 
 			// To update the height of an item, we are *mutating* the `heightCache` map.
 			// Unluckily, React will not detect our direct change.
@@ -336,10 +322,10 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 
 			// If the list shrinks, offset the difference to prevent the content from scrolling up.
 			if (listHeight < state.listHeight) {
-				const prevItemEdge = state.nailPoints[state.pivotIndex] + prevPivotHeight;
-				const nextItemEdge = nailPoints[state.pivotIndex] + this.getIndexHeight(state.pivotIndex);
+				const prevPivotEdge = state.nailPoints[pivot] + prevPivotHeight;
+				const nextPivotEdge = nailPoints[pivot] + this.getIndexHeight(pivot);
 
-				document.documentElement.scrollTop -= prevItemEdge - nextItemEdge;
+				document.documentElement.scrollTop -= prevPivotEdge - nextPivotEdge;
 				this.getWindowEdges();
 			}
 
