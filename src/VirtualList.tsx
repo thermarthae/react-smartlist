@@ -16,7 +16,6 @@ export type TWindowEdges = {
 	rawTopEdge: number;
 	rawBottomEdge: number;
 	listScrollHeight: number;
-	scrollDiff: number;
 	isInView: boolean;
 };
 
@@ -253,16 +252,12 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		const bottomEdge = overscanedBottomEdge > 0 ? Math.min(scrollHeight, overscanedBottomEdge) : 0;
 		const topEdge = overscanedTopEdge > 0 ? Math.min(overscanedTopEdge, bottomEdge) : 0;
 
-		const scrollDiff = rawTopEdge - (this.lastWindowEdges?.rawTopEdge ?? rawTopEdge);
-
-
 		const edges: TWindowEdges = {
 			topEdge,
 			bottomEdge,
 			rawTopEdge,
 			rawBottomEdge,
 			listScrollHeight: scrollHeight,
-			scrollDiff,
 			isInView: bottomEdge !== topEdge,
 		};
 
