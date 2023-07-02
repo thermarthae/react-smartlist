@@ -98,7 +98,9 @@ describe('VirtualList', () => {
 		Object.defineProperties(HTMLElement.prototype, {
 			scrollHeight: {
 				configurable: true,
-				get: () => Number.MAX_SAFE_INTEGER,
+				get(this: HTMLDivElement) {
+					return parseInt(this.style.height, 10);
+				},
 			},
 		});
 	});
@@ -406,7 +408,7 @@ describe('VirtualList', () => {
 		const docEl = document.documentElement;
 
 		// init one pixel below the last item
-		simulateScroll(items.length * estimatedHeight + 1);
+		simulateScroll(items.length * estimatedHeight);
 		const { queryAllByText } = render(
 			<VirtualList
 				{...defaultProps}
