@@ -58,6 +58,8 @@ describe('VirtualList', () => {
 	beforeEach(async () => {
 		jest.resetModules();
 
+		document.documentElement.scrollTop = 0;
+
 		React = await import('react');
 		scheduler = await import('scheduler') as any;
 		VirtualList = (await import('../VirtualList')).default;
