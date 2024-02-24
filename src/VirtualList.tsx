@@ -207,7 +207,16 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		window.removeEventListener('resize', this.handleScroll);
 	}
 
-	private readonly getPivot = (s = this.state) => s.firstIndex + Math.round((s.lastIndex - s.firstIndex) / 2);
+	private readonly getPivot = (s = this.state) => {
+		const pivot = s.firstIndex;
+
+		for (let i = s.firstIndex + 1; i <= s.lastIndex; i += 1) {
+			const key = this.props.itemKey(this.props.items[i]);
+			if (s.heightCache.has(key)) return i;
+		}
+
+		return pivot;
+	};
 
 	private readonly handleScroll = () => {
 		if (!this.props.items[0]) return;
