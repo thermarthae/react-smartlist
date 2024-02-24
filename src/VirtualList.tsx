@@ -96,6 +96,10 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	 * Keep this function as performant as possible.
 	 */
 	onScroll?: (windowEdges: TWindowEdges) => void;
+	/**
+	 * Custom CSS styles attached to a `VirtualList` root element.
+	 */
+	style?: React.CSSProperties | undefined;
 };
 
 type TState<I extends object = object> = {
@@ -366,6 +370,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			className,
 			sharedProps,
 			disableMeasurment,
+			style,
 		} = this.props;
 		const {
 			heightCache,
@@ -384,6 +389,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 					position: 'relative',
 					contain: 'strict',
 					width: '100%',
+					...style,
 					height: listHeight,
 				}}
 			>
