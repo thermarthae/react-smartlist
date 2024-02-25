@@ -5,7 +5,7 @@
   },
   "eslint.nodePath": ".yarn/sdks",
   "jest.jestCommandLine": "yarn test",
-  "jest.autoRun": "off",
+  "jest.runMode": "on-save",
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
