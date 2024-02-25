@@ -1,23 +1,51 @@
 class ResizeObserverHack implements ResizeObserver {
 	private callback: ResizeObserverCallback;
 
+	private observer: MutationObserver | null;
+
+	private lastHeight: string;
+
+	private target: HTMLElement;
+
 	constructor(fn: ResizeObserverCallback) {
 		this.callback = fn;
 	}
 
-	// eslint-disable-next-line class-methods-use-this
-	public disconnect() { }
+	public disconnect() {
+		this.observer?.disconnect();
+		this.observer = null;
+	}
 
-	// eslint-disable-next-line class-methods-use-this
-	public unobserve() { }
+	public unobserve() {
+		this.observer?.disconnect();
+		this.observer = null;
+	}
+
+	public handleCallback = () => {
+		if (this.lastHeight === this.target.style.height) return;
+
+		this.lastHeight = this.target.style.height;
+		const height = parseInt(this.target.style.height, 10);
+
+		if (Number.isFinite(height)) {
+			this.callback([{ borderBoxSize: [{ blockSize: height }] } as any as ResizeObserverEntry], this);
+		}
+	}
 
 	public observe(target: HTMLElement) {
-		const height = parseInt(target.style.height, 10) ?? -1;
-		const entry = {
-			borderBoxSize: [{ blockSize: height }],
-		};
+		this.target = target;
+		this.handleCallback();
 
-		this.callback([entry as any as ResizeObserverEntry], null as never);
+		if (!this.observer) {
+			this.observer = new MutationObserver(() => this.handleCallback());
+
+			this.observer.observe(target, {
+				attributes: true,
+				childList: true,
+				characterData: true,
+				subtree: true,
+			});
+		}
 	}
 }
 
