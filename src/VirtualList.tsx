@@ -15,7 +15,7 @@ export type TWindowEdges = {
 	bottom: number;
 	rawTop: number;
 	rawBottom: number;
-	scrollHeight: number;
+	listHeight: number;
 	isInView: boolean;
 };
 
@@ -238,16 +238,15 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		) this.setState(next);
 	};
 
-	private readonly getWindowEdges = (nextScrollHeight?: number): TWindowEdges => {
-		if (!this.listElRef.current) throw new Error('Bug! No list ref');
-		const { offsetTop, scrollHeight: currentScrollHeight } = this.listElRef.current;
+	private readonly getWindowEdges = (nextListHeight?: number): TWindowEdges => {
+		const offsetTop = this.listElRef?.current?.offsetTop ?? 0;
 		const { overscanPadding = 20 } = this.props;
 
 		const rawTop = document.documentElement.scrollTop - offsetTop;
 		const rawBottom = rawTop + window.innerHeight;
-		const scrollHeight = nextScrollHeight ?? currentScrollHeight;
+		const listHeight = nextListHeight ?? this.state.listHeight;
 
-		const bottom = Math.max(0, Math.min(scrollHeight, rawBottom + overscanPadding));
+		const bottom = Math.max(0, Math.min(listHeight, rawBottom + overscanPadding));
 		const top = Math.max(0, Math.min(bottom, rawTop - overscanPadding));
 
 		return {
@@ -256,7 +255,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			bottom,
 			rawTop,
 			rawBottom,
-			scrollHeight,
+			listHeight,
 		};
 	};
 
