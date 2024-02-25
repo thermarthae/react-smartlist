@@ -238,13 +238,14 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		) this.setState(next);
 	};
 
-	private readonly getWindowEdges = (): TWindowEdges => {
+	private readonly getWindowEdges = (nextScrollHeight?: number): TWindowEdges => {
 		if (!this.listElRef.current) throw new Error('Bug! No list ref');
-		const { offsetTop, scrollHeight } = this.listElRef.current;
+		const { offsetTop, scrollHeight: currentScrollHeight } = this.listElRef.current;
 		const { overscanPadding = 20 } = this.props;
 
 		const rawTop = document.documentElement.scrollTop - offsetTop;
 		const rawBottom = rawTop + window.innerHeight;
+		const scrollHeight = nextScrollHeight ?? currentScrollHeight;
 
 		const bottom = Math.max(0, Math.min(scrollHeight, rawBottom + overscanPadding));
 		const top = Math.max(0, Math.min(bottom, rawTop - overscanPadding));
@@ -333,7 +334,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 				heightCacheVersion,
 				listHeight,
 				nailPoints,
-				...this.getVisibleIndexes(nailPoints),
+				...this.getVisibleIndexes(nailPoints, this.getWindowEdges(listHeight)),
 			};
 		});
 	};
