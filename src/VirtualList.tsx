@@ -305,7 +305,6 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			// To update the height of an item, we are *mutating* the `heightCache` map.
 			// Unluckily, React will not detect our direct change.
 			// To let him know about the change, we are just bumping a dummy `heightCacheVersion` state.
-			// We could create a new map, but bumping is more performant - O(1) vs. O(n).
 			state.heightCache.set(entry.id, entry.height);
 			const heightCacheVersion = state.heightCacheVersion + 1;
 
@@ -319,12 +318,14 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			}
 
 			const listHeight = nailPoints.at(-1)! + this.getItemHeight(items.at(-1)!);
+			const changeAbovePivot = (entry.index < pivotIndex || state.lastIndex <= pivotIndex);
+			const listShrinks = listHeight < state.listHeight;
 
-			// If the list shrinks, offset the difference to prevent the content from scrolling up.
-			if (listHeight < state.listHeight) {
+			if (changeAbovePivot || listShrinks) {
 				const prevPivotEdge = state.nailPoints[pivotIndex] + prevPivotHeight;
 				const nextPivotEdge = nailPoints[pivotIndex] + this.getItemHeight(pivot);
 
+				// Offset the difference to prevent the content from jumping around.
 				document.documentElement.scrollTop -= prevPivotEdge - nextPivotEdge;
 			}
 
