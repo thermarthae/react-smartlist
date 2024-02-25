@@ -11,11 +11,11 @@ import VirtualListItem, { TSharedProps } from './VirtualListItem';
 export type TItemID = string | number;
 
 export type TWindowEdges = {
-	topEdge: number;
-	bottomEdge: number;
-	rawTopEdge: number;
-	rawBottomEdge: number;
-	listScrollHeight: number;
+	top: number;
+	bottom: number;
+	rawTop: number;
+	rawBottom: number;
+	scrollHeight: number;
 	isInView: boolean;
 };
 
@@ -245,22 +245,19 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		const { offsetTop, scrollHeight } = this.listElRef.current;
 		const { overscanPadding = 20 } = this.props;
 
-		const rawTopEdge = (document.documentElement.scrollTop - offsetTop);
-		const rawBottomEdge = (rawTopEdge + window.innerHeight);
+		const rawTop = document.documentElement.scrollTop - offsetTop;
+		const rawBottom = rawTop + window.innerHeight;
 
-		const overscanedTopEdge = rawTopEdge - overscanPadding;
-		const overscanedBottomEdge = rawBottomEdge + overscanPadding;
-
-		const bottomEdge = overscanedBottomEdge > 0 ? Math.min(scrollHeight, overscanedBottomEdge) : 0;
-		const topEdge = overscanedTopEdge > 0 ? Math.min(overscanedTopEdge, bottomEdge) : 0;
+		const bottom = Math.max(0, Math.min(scrollHeight, rawBottom + overscanPadding));
+		const top = Math.max(0, Math.min(bottom, rawTop - overscanPadding));
 
 		const edges: TWindowEdges = {
-			topEdge,
-			bottomEdge,
-			rawTopEdge,
-			rawBottomEdge,
-			listScrollHeight: scrollHeight,
-			isInView: bottomEdge !== topEdge,
+			isInView: bottom !== top,
+			top,
+			bottom,
+			rawTop,
+			rawBottom,
+			scrollHeight,
 		};
 
 		this.lastWindowEdges = edges;
@@ -363,13 +360,13 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	};
 
 	private readonly isItemVisible = (index: number, nailPoints = this.state.nailPoints) => {
-		const { isInView, topEdge = 0, bottomEdge = 0 } = this.lastWindowEdges ?? {};
+		const { isInView, top = 0, bottom = 0 } = this.lastWindowEdges ?? {};
 		if (!isInView) return false;
 
 		const nailPoint = nailPoints[index];
 		const height = this.getIndexHeight(index);
 
-		return (topEdge <= nailPoint + height) && (nailPoint <= bottomEdge);
+		return (top <= nailPoint + height) && (nailPoint <= bottom);
 	};
 
 	public render() {
