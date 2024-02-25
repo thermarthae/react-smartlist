@@ -5,7 +5,6 @@ import {
 } from 'react';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import clampIntoArrRange from './clampIntoArrRange';
 import VirtualListItem, { TSharedProps } from './VirtualListItem';
 
 export type TItemID = string | number;
@@ -134,14 +133,16 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			const height = !items[0] ? 0 : getHeight(arrLastIndex);
 			const listHeight = nailPoint + height;
 
+			const clampIntoArrRange = (value: number) => Math.min(Math.max(0, value), items.length - 1);
+
 			return {
 				memoizedItemsArray: items,
 				nailPoints,
 				listHeight,
 				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
 				// Fix indexes when out of bounds:
-				firstIndex: clampIntoArrRange(items, state.firstIndex),
-				lastIndex: clampIntoArrRange(items, state.lastIndex),
+				firstIndex: clampIntoArrRange(state.firstIndex),
+				lastIndex: clampIntoArrRange(state.lastIndex),
 			};
 		}
 
