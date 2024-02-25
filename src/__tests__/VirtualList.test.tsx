@@ -307,6 +307,9 @@ describe('VirtualList', () => {
 		];
 		const { getAllByText } = render(<VirtualList {...defaultProps} items={items} />);
 
+		const initRender = getAllByText(/ListItem/);
+		expect(initRender).toHaveLength(Math.ceil(windowInnerHeight / defaultProps.estimatedItemHeight));
+
 		triggerMeasurement();
 
 		const renderedItems = getAllByText(/ListItem/);
