@@ -43,7 +43,7 @@ describe('VirtualListItem', () => {
 		jest.resetModules();
 
 		React = await import('react');
-		scheduler = await import('scheduler') as any;
+		scheduler = await import('scheduler') as unknown as typeof scheduler;
 		getFirstCallbackNode = scheduler.unstable_getFirstCallbackNode;
 		LowPriority = scheduler.unstable_LowPriority;
 		UserBlockingPriority = scheduler.unstable_UserBlockingPriority;

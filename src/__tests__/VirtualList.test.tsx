@@ -22,7 +22,6 @@ type TSharedProps = {
 	title?: string;
 };
 
-let React: typeof import('react'); // eslint-disable-line @typescript-eslint/no-unused-vars
 let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
 let VirtualList: typeof import('../VirtualList').default;
 
@@ -37,7 +36,7 @@ describe('VirtualList', () => {
 	const estimatedItemHeight = 50;
 	const windowInnerHeight = 768; // Jest sets 768px as a default `window.innerHeight` value
 
-	const genItemArray = (length: number): TItem[] => [...Array(length)].map((_v, index) => ({
+	const genItemArray = (length: number): TItem[] => [...Array(length) as unknown[]].map((_v, index) => ({
 		id: index,
 		height: (index % 10 === 0) ? 100 : 50,
 	}));
@@ -60,8 +59,7 @@ describe('VirtualList', () => {
 
 		document.documentElement.scrollTop = 0;
 
-		React = await import('react');
-		scheduler = await import('scheduler') as any;
+		scheduler = await import('scheduler') as unknown as typeof scheduler;
 		VirtualList = (await import('../VirtualList')).default;
 
 		itemKeyFn = jest.fn((item: TItem) => item.id);
@@ -139,7 +137,7 @@ describe('VirtualList', () => {
 
 		const nailPoints = genNailPoints();
 		const estimatedListHeight = parseInt(list.style.height, 10);
-		const expectedItemsCount = nailPoints.findIndex(i => i >= windowInnerHeight)!;
+		const expectedItemsCount = nailPoints.findIndex(i => i >= windowInnerHeight);
 		const expectedListHeight = nailPoints[expectedItemsCount]
 			+ (nailPoints.length - expectedItemsCount) * estimatedItemHeight;
 
@@ -153,7 +151,7 @@ describe('VirtualList', () => {
 	it('should handle `disableMeasurment` prop', () => {
 		const { container } = render(<VirtualList {...defaultProps} disableMeasurment />);
 		const list = container.firstElementChild as HTMLElement;
-		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= windowInnerHeight)!;
+		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= windowInnerHeight);
 		const expectedListHeight = defaultProps.items.length * estimatedItemHeight;
 
 		triggerMeasurement();
@@ -208,7 +206,7 @@ describe('VirtualList', () => {
 		const list = container.firstElementChild as HTMLElement;
 
 		const paddedWindow = windowInnerHeight + padding;
-		const expectedCount = estimatedNailPoints.findIndex(i => i >= paddedWindow)!;
+		const expectedCount = estimatedNailPoints.findIndex(i => i >= paddedWindow);
 
 		expect(list.childElementCount).toEqual(expectedCount);
 	});
@@ -220,7 +218,7 @@ describe('VirtualList', () => {
 
 		triggerMeasurement();
 
-		const expectedCount = genNailPoints().findIndex(i => i >= (windowInnerHeight + padding))!;
+		const expectedCount = genNailPoints().findIndex(i => i >= (windowInnerHeight + padding));
 		expect(list.childElementCount).toEqual(expectedCount);
 	});
 
@@ -230,14 +228,14 @@ describe('VirtualList', () => {
 		const list = container.firstElementChild as HTMLElement;
 
 		const initWindowHeight = windowInnerHeight + initialPadding;
-		const initCount = estimatedNailPoints.findIndex(i => i >= initWindowHeight)!;
+		const initCount = estimatedNailPoints.findIndex(i => i >= initWindowHeight);
 		expect(list.childElementCount).toEqual(initCount);
 		//
 		const changedPadding = 500;
 		rerender(<VirtualList {...defaultProps} overscanPadding={changedPadding} />);
 
 		const newWindowHeight = windowInnerHeight + changedPadding;
-		const newCount = estimatedNailPoints.findIndex(i => i >= newWindowHeight)!;
+		const newCount = estimatedNailPoints.findIndex(i => i >= newWindowHeight);
 		expect(list.childElementCount).toEqual(newCount);
 		expect(initCount).not.toEqual(newCount);
 	});
@@ -352,7 +350,7 @@ describe('VirtualList', () => {
 		const firstListHeight = parseInt(list.style.height, 10);
 
 		// @ts-expect-error Hack used to trigger `handleMeasure` method
-		const measureFn = (spiedFn.mock.instances[0] as any as typeof VirtualList.prototype).handleMeasure;
+		const measureFn = (spiedFn.mock.instances[0] as unknown as typeof VirtualList.prototype).handleMeasure;
 
 		const item = defaultProps.items[30];
 		const height = 9999;
@@ -407,7 +405,7 @@ describe('VirtualList', () => {
 	it('should handle items that shrink above the viewport', () => {
 		const height = 100;
 		const estimatedHeight = 1000;
-		const items = [...Array(500)].map((_, id) => ({ id, height }));
+		const items = [...Array(500) as unknown[]].map((_, id) => ({ id, height }));
 		const docEl = document.documentElement;
 
 		// init one pixel below the last item
@@ -445,7 +443,7 @@ describe('VirtualList', () => {
 	it('should handle items that grow above the viewport', () => {
 		const height = 1000;
 		const estimatedHeight = 100;
-		const items = [...Array(500)].map((_, id) => ({ id, height }));
+		const items = [...Array(500) as unknown[]].map((_, id) => ({ id, height }));
 		const docEl = document.documentElement;
 
 		// init one pixel below the last item
@@ -498,7 +496,7 @@ describe('VirtualList', () => {
 	it('should handle instant scroll into the unmesured items', () => {
 		const height = 1000;
 		const estimatedHeight = 100;
-		const items = [...Array(500)].map((_, id) => ({ id, height }));
+		const items = [...Array(500) as undefined[]].map((_, id) => ({ id, height }));
 		const docEl = document.documentElement;
 
 		// init one pixel below the last item
