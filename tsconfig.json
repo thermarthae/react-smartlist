@@ -27,7 +27,7 @@
 	},
 	"include": [
 		"./src",
-		"./.eslintrc.cjs",
+		"./eslint.config.js",
 		"./jest.config.js",
 		"./rollup.config.js",
 	]

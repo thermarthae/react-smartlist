@@ -18,7 +18,7 @@ import {
 
 type TItem = { id: number };
 
-let React: typeof import('react'); // eslint-disable-line @typescript-eslint/no-unused-vars
+let React: typeof import('react');
 let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
 let getFirstCallbackNode: typeof scheduler.unstable_getFirstCallbackNode;
 let LowPriority: typeof scheduler.unstable_LowPriority;

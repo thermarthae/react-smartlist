@@ -1,7 +1,7 @@
 import dts from 'rollup-plugin-dts';
 import { swc } from 'rollup-plugin-swc3';
 
-import pkg from './package.json' assert { type: 'json' };
+import pkg from './package.json' with { type: 'json' };
 
 /**  @type {import('rollup').RollupOptions} */
 const commonConfig = {
