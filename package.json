@@ -45,7 +45,7 @@
 		"test": "jest"
 	},
 	"dependencies": {
-		"scheduler": "^0.23.0 || ^0.25.0",
+		"scheduler": "^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0",
 		"shallow-equal": "^3.1.0"
 	},
 	"peerDependencies": {
@@ -67,8 +67,8 @@
 		"@testing-library/react": "^16.3.0",
 		"@thermarthae/eslint-config": "^5.0.0",
 		"@types/node": "^24.3.0",
-		"@types/react": "^19.0.1",
-		"@types/react-dom": "^19.0.2",
+		"@types/react": "^19.1.11",
+		"@types/react-dom": "^19.1.7",
 		"@types/scheduler": "^0.26.0",
 		"eslint": "^9.34.0",
 		"eslint-plugin-jsx-a11y": "^6.10.2",
@@ -77,8 +77,8 @@
 		"eslint-plugin-simple-import-sort": "^12.1.1",
 		"jest": "^30.0.5",
 		"jest-environment-jsdom": "^30.0.5",
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
 		"rollup": "^4.48.1",
 		"rollup-plugin-dts": "^6.2.3",
 		"rollup-plugin-swc3": "^0.12.1",

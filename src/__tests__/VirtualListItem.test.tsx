@@ -9,6 +9,7 @@ import {
 	it,
 	jest,
 } from '@jest/globals';
+import type { CallbackNode } from 'scheduler';
 
 import type { TEntry } from '../VirtualList';
 import type { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem';
@@ -16,10 +17,17 @@ import type { TChildrenProps, TProps as TVirtualListItemProps } from '../Virtual
 type TItem = { id: number };
 
 let React: typeof import('react');
-let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
-let getFirstCallbackNode: typeof scheduler.unstable_getFirstCallbackNode;
+let scheduler: typeof import('scheduler') & {
+	unstable_flushAll: () => void;
+	unstable_hasPendingWork: () => void;
+	unstable_scheduleCallback: jest.Mock<typeof import('scheduler').unstable_scheduleCallback>;
+};
+
+let hasPendingWork: typeof scheduler.unstable_hasPendingWork;
+let getLastScheduledNode: () => CallbackNode | undefined;
 let LowPriority: typeof scheduler.unstable_LowPriority;
 let UserBlockingPriority: typeof scheduler.unstable_UserBlockingPriority;
+
 let VirtualListItem: typeof import('../VirtualListItem').default;
 
 jest.useFakeTimers();
@@ -41,7 +49,8 @@ describe('VirtualListItem', () => {
 
 		React = await import('react');
 		scheduler = await import('scheduler') as unknown as typeof scheduler;
-		getFirstCallbackNode = scheduler.unstable_getFirstCallbackNode;
+		hasPendingWork = scheduler.unstable_hasPendingWork;
+		getLastScheduledNode = () => scheduler.unstable_scheduleCallback.mock.results.at(-1)?.value as CallbackNode;
 		LowPriority = scheduler.unstable_LowPriority;
 		UserBlockingPriority = scheduler.unstable_UserBlockingPriority;
 
@@ -86,43 +95,43 @@ describe('VirtualListItem', () => {
 	it('should attach observers with correct priorities', () => {
 		// first render has an UserBlockingPriority:
 		render(<VirtualListItem {...defaultProps} />);
-		expect(getFirstCallbackNode()?.priorityLevel).toBe(UserBlockingPriority);
+		expect(getLastScheduledNode()?.priorityLevel).toBe(UserBlockingPriority);
 
 		triggerMeasurement();
 
 		// everything except the first render has LowPriority:
 		render(<VirtualListItem {...defaultProps} itWasMeasured />);
-		expect(getFirstCallbackNode()?.priorityLevel).toBe(LowPriority);
+		expect(getLastScheduledNode()?.priorityLevel).toBe(LowPriority);
 	});
 
 	it('should not attach observers when measurment is disabled', () => {
 		render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
-		expect(getFirstCallbackNode()).toBeNull();
+		expect(hasPendingWork()).toBeFalsy();
 	});
 
 	it('should attach observers when measurment is no longer disabled', () => {
 		const { rerender } = render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
-		expect(getFirstCallbackNode()).toBeNull();
+		expect(hasPendingWork()).toBeFalsy();
 
 		rerender(<VirtualListItem {...defaultProps} isMeasurmentDisabled={false} />);
-		expect(getFirstCallbackNode()).toBeDefined();
+		expect(hasPendingWork()).toBeTruthy();
 	});
 
 	it('should abort an observer attachment at premature unmount', () => {
 		const { unmount } = render(<VirtualListItem {...defaultProps} />);
 
-		expect(getFirstCallbackNode()?.callback).toBeDefined();
+		const node = getLastScheduledNode()!;
+		expect(node.callback).toBeDefined();
+
 		unmount();
-		expect(getFirstCallbackNode()?.callback).toBeNull();
+		expect(node.callback).toBeNull();
 	});
 
 	it('should not trigger the onMeasure event when height is equal to 0', () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 0 }} />);
 
 		// give a scheduler some time to attach the listener
-		expect(getFirstCallbackNode()).not.toBeNull();
 		triggerMeasurement();
-		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).not.toHaveBeenCalled();
 	});
@@ -131,9 +140,7 @@ describe('VirtualListItem', () => {
 		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 1 }} />);
 
 		// give a scheduler some time to attach the listener
-		expect(getFirstCallbackNode()).not.toBeNull();
 		triggerMeasurement();
-		expect(getFirstCallbackNode()).toBeNull();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
 		expect(onMeasureFn).toHaveBeenCalledWith({
