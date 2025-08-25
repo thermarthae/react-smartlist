@@ -10,11 +10,8 @@ import {
 	jest,
 } from '@jest/globals';
 
-import { TEntry } from '../VirtualList';
-import {
-	TChildrenProps,
-	TProps as TVirtualListItemProps,
-} from '../VirtualListItem';
+import type { TEntry } from '../VirtualList';
+import type { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem';
 
 type TItem = { id: number };
 
@@ -127,7 +124,7 @@ describe('VirtualListItem', () => {
 		triggerMeasurement();
 		expect(getFirstCallbackNode()).toBeNull();
 
-		expect(onMeasureFn).not.toBeCalled();
+		expect(onMeasureFn).not.toHaveBeenCalled();
 	});
 
 	it('should trigger the onMeasure event', () => {

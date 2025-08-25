@@ -11,8 +11,8 @@ import {
 	jest,
 } from '@jest/globals';
 
-import { TProps as TVirtualListProps } from '../VirtualList';
-import { TChildrenProps } from '../VirtualListItem';
+import type { TProps as TVirtualListProps } from '../VirtualList';
+import type { TChildrenProps } from '../VirtualListItem';
 
 type TItem = {
 	id: number;
@@ -273,9 +273,9 @@ describe('VirtualList', () => {
 
 		scrollHandler.mockClear();
 
-		expect(scrollHandler).not.toBeCalled();
+		expect(scrollHandler).not.toHaveBeenCalled();
 		simulateScroll(100);
-		expect(scrollHandler).toBeCalledTimes(1);
+		expect(scrollHandler).toHaveBeenCalledTimes(1);
 	});
 
 	it('should handle instant top/bottom scrolling', () => {
