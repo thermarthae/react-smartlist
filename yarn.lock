@@ -1253,18 +1253,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@stylistic/eslint-plugin@npm:^2.13.0":
-  version: 2.13.0
-  resolution: "@stylistic/eslint-plugin@npm:2.13.0"
+"@stylistic/eslint-plugin@npm:^5.2.3":
+  version: 5.2.3
+  resolution: "@stylistic/eslint-plugin@npm:5.2.3"
   dependencies:
-    "@typescript-eslint/utils": "npm:^8.13.0"
-    eslint-visitor-keys: "npm:^4.2.0"
-    espree: "npm:^10.3.0"
+    "@eslint-community/eslint-utils": "npm:^4.7.0"
+    "@typescript-eslint/types": "npm:^8.38.0"
+    eslint-visitor-keys: "npm:^4.2.1"
+    espree: "npm:^10.4.0"
     estraverse: "npm:^5.3.0"
-    picomatch: "npm:^4.0.2"
+    picomatch: "npm:^4.0.3"
   peerDependencies:
-    eslint: ">=8.40.0"
-  checksum: 10/6e65fb96a18e8e691d051c7e121d63376199178e31cd69505d02bd84a4afd6032786fef29873c5c7d41d2412d84c360b4318b2cb9cb969adb0acb1215ada0e62
+    eslint: ">=9.0.0"
+  checksum: 10/6015a0b8027da97380244c497824d319831eb59a5c71b509e6e90b0e8100b1489b9cbca1f14f0fa8768d6a60c9985f72ef35f84eb3ec21771199dfcbdd2e9474
   languageName: node
   linkType: hard
 
@@ -1449,19 +1450,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@thermarthae/eslint-config@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "@thermarthae/eslint-config@npm:5.0.0"
+"@thermarthae/eslint-config@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "@thermarthae/eslint-config@npm:6.0.0"
   peerDependencies:
-    "@eslint/js": ^9.13.0
-    "@stylistic/eslint-plugin": ^2.9.0
-    eslint: ^9.13.0
-    eslint-plugin-jsx-a11y: ^6.10.1
-    eslint-plugin-react: ^7.37.1
-    eslint-plugin-react-hooks: ^5.0.0
+    "@eslint/js": ^9.29.0
+    "@stylistic/eslint-plugin": ^4.4.1 || ^5.0.0
+    eslint: ^9.29.0
+    eslint-plugin-jsx-a11y: ^6.10.2
+    eslint-plugin-react: ^7.37.5
+    eslint-plugin-react-hooks: ^5.2.0
     eslint-plugin-simple-import-sort: ^12.1.1
-    typescript: ^5.6.3
-    typescript-eslint: ^8.11.0
+    typescript: ^5.8.3
+    typescript-eslint: ^8.34.1
   peerDependenciesMeta:
     eslint-plugin-jsx-a11y:
       optional: true
@@ -1469,7 +1470,7 @@ __metadata:
       optional: true
     eslint-plugin-react-hooks:
       optional: true
-  checksum: 10/29b83cae28e01c15634ec97eba7306180913e1c1802a24aa0fad1ad3d38ceebdf19d3e72ad6fa1441d57dddd8d20c80386d1e6b6cc38b29f41c806de9412671f
+  checksum: 10/745487562ab45ccf7b761ca6fa1bb4384e4d87326774c006ee18ef4e693c34c369ccc4a3a7f088067f758f5447dfcfbc8ea25029f968d73f4fda6a651dc60a6e
   languageName: node
   linkType: hard
 
@@ -1479,12 +1480,12 @@ __metadata:
   dependencies:
     "@eslint/js": "npm:^9.34.0"
     "@jest/globals": "npm:^30.0.5"
-    "@stylistic/eslint-plugin": "npm:^2.13.0"
+    "@stylistic/eslint-plugin": "npm:^5.2.3"
     "@swc/core": "npm:^1.13.5"
     "@swc/jest": "npm:^0.2.39"
     "@testing-library/dom": "npm:^10.4.1"
     "@testing-library/react": "npm:^16.3.0"
-    "@thermarthae/eslint-config": "npm:^5.0.0"
+    "@thermarthae/eslint-config": "npm:^6.0.0"
     "@types/node": "npm:^24.3.0"
     "@types/react": "npm:^19.1.11"
     "@types/react-dom": "npm:^19.1.7"
@@ -1504,7 +1505,7 @@ __metadata:
     scheduler: "npm:^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0"
     shallow-equal: "npm:^3.1.0"
     typescript: "npm:^5.9.2"
-    typescript-eslint: "npm:^8.40.0"
+    typescript-eslint: "npm:^8.41.0"
   peerDependencies:
     "@types/react": "*"
     react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1770,7 +1771,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/types@npm:8.41.0, @typescript-eslint/types@npm:^8.41.0":
+"@typescript-eslint/types@npm:8.41.0, @typescript-eslint/types@npm:^8.38.0, @typescript-eslint/types@npm:^8.41.0":
   version: 8.41.0
   resolution: "@typescript-eslint/types@npm:8.41.0"
   checksum: 10/e2fe5d9125264a1b1310fff7ac65e827da9885219d7f910dba090dcf7d4242830cb96695c7257634b22e1947943a2e890f9740536d95612452e5752385ab6a5b
@@ -1797,7 +1798,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:8.41.0, @typescript-eslint/utils@npm:^8.13.0":
+"@typescript-eslint/utils@npm:8.41.0":
   version: 8.41.0
   resolution: "@typescript-eslint/utils@npm:8.41.0"
   dependencies:
@@ -2735,9 +2736,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.204":
-  version: 1.5.208
-  resolution: "electron-to-chromium@npm:1.5.208"
-  checksum: 10/7805cc96f352b7da29cff91d731d580bc8118a91f6de4c3ca07b5a989d2488a846c99d26d5b249789915de67bdfdd2148fa666c7fdb8f9bea04beb31183b9767
+  version: 1.5.209
+  resolution: "electron-to-chromium@npm:1.5.209"
+  checksum: 10/9262eb7bef0de7c237c83d0862eabc04243080f7c18222abbceda61d0965da5d05a27c1dcad9746ba4e1d26115cb81bd0b90b9762e61a87db1227584151ce388
   languageName: node
   linkType: hard
 
@@ -3051,7 +3052,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-visitor-keys@npm:^4.2.0, eslint-visitor-keys@npm:^4.2.1":
+"eslint-visitor-keys@npm:^4.2.1":
   version: 4.2.1
   resolution: "eslint-visitor-keys@npm:4.2.1"
   checksum: 10/3ee00fc6a7002d4b0ffd9dc99e13a6a7882c557329e6c25ab254220d71e5c9c4f89dca4695352949ea678eb1f3ba912a18ef8aac0a7fe094196fd92f441bfce2
@@ -3108,7 +3109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"espree@npm:^10.0.1, espree@npm:^10.3.0, espree@npm:^10.4.0":
+"espree@npm:^10.0.1, espree@npm:^10.4.0":
   version: 10.4.0
   resolution: "espree@npm:10.4.0"
   dependencies:
@@ -5369,7 +5370,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picomatch@npm:^4.0.2":
+"picomatch@npm:^4.0.2, picomatch@npm:^4.0.3":
   version: 4.0.3
   resolution: "picomatch@npm:4.0.3"
   checksum: 10/57b99055f40b16798f2802916d9c17e9744e620a0db136554af01d19598b96e45e2f00014c91d1b8b13874b80caa8c295b3d589a3f72373ec4aaf54baa5962d5
@@ -6419,7 +6420,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript-eslint@npm:^8.40.0":
+"typescript-eslint@npm:^8.41.0":
   version: 8.41.0
   resolution: "typescript-eslint@npm:8.41.0"
   dependencies:
