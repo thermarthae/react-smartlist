@@ -3,16 +3,17 @@ import {
 	fireEvent,
 	render,
 } from '@testing-library/react';
+import { unstable_flushAll as flushAll } from 'scheduler/unstable_mock';
 import {
 	beforeEach,
 	describe,
 	expect,
 	it,
-	jest,
-} from '@jest/globals';
+	vi,
+} from 'vitest';
 
-import type { TProps as TVirtualListProps } from '../VirtualList';
-import type { TChildrenProps } from '../VirtualListItem';
+import VirtualList, { TProps as TVirtualListProps } from '../VirtualList.tsx';
+import type { TChildrenProps } from '../VirtualListItem.tsx';
 
 type TItem = {
 	id: number;
@@ -22,19 +23,11 @@ type TSharedProps = {
 	title?: string;
 };
 
-let scheduler: typeof import('scheduler') & { unstable_flushAll: () => void };
-let VirtualList: typeof import('../VirtualList').default;
-
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe('VirtualList', () => {
-	let itemKeyFn: jest.Mock<(item: TItem) => number>;
-	let ItemComponent: jest.Mock<React.FunctionComponent<TChildrenProps<TItem, HTMLDivElement> & TSharedProps>>;
-	let defaultProps: TVirtualListProps<TItem>;
-	let estimatedNailPoints: number[];
-
 	const estimatedItemHeight = 50;
-	const windowInnerHeight = 768; // Jest sets 768px as a default `window.innerHeight` value
+	const windowInnerHeight = 768; // jsdom sets 768px as a default `window.innerHeight` value
 
 	const genItemArray = (length: number): TItem[] => [...Array(length) as unknown[]].map((_v, index) => ({
 		id: index,
@@ -50,45 +43,38 @@ describe('VirtualList', () => {
 	};
 
 	const triggerMeasurement = () => act(() => {
-		jest.runAllTimers();
-		scheduler.unstable_flushAll();
+		vi.runAllTimers();
+		flushAll();
 	});
 
-	beforeEach(async () => {
-		jest.resetModules();
+	const itemKeyFn = vi.fn((item: TItem) => item.id);
+	const ItemComponent = vi.fn(({
+		rootElProps,
+		innerRef,
+		data,
+		title,
+	}: TChildrenProps<TItem, HTMLDivElement> & TSharedProps) => (
+		<div
+			{...rootElProps}
+			ref={innerRef}
+			style={{ ...rootElProps.style, height: data.height }}
+			title={title}
+			data-id={data.id}
+			data-height={data.height}
+			children="ListItem"
+		/>
+	));
+	const defaultProps: TVirtualListProps<TItem> = {
+		component: ItemComponent,
+		items: genItemArray(50),
+		estimatedItemHeight,
+		itemKey: itemKeyFn,
+		overscanPadding: 0,
+	};
+	const estimatedNailPoints = defaultProps.items.map((_data, index) => index * estimatedItemHeight);
 
+	beforeEach(() => {
 		document.documentElement.scrollTop = 0;
-
-		scheduler = await import('scheduler') as unknown as typeof scheduler;
-		VirtualList = (await import('../VirtualList')).default;
-
-		itemKeyFn = jest.fn((item: TItem) => item.id);
-
-		ItemComponent = jest.fn(({
-			rootElProps,
-			innerRef,
-			data,
-			title,
-		}) => (
-			<div
-				{...rootElProps}
-				ref={innerRef}
-				style={{ ...rootElProps.style, height: data.height }}
-				title={title}
-				data-id={data.id}
-				data-height={data.height}
-				children="ListItem"
-			/>
-		));
-
-		defaultProps = {
-			component: ItemComponent,
-			items: genItemArray(50),
-			estimatedItemHeight,
-			itemKey: itemKeyFn,
-			overscanPadding: 0,
-		};
-		estimatedNailPoints ??= defaultProps.items.map((_data, index) => index * estimatedItemHeight);
 
 		// JSdom does not do actual layout and so doesn't return meaningful values here.
 		// For the purposes of our tests though, we can mock out semi-meaningful values.
@@ -268,7 +254,7 @@ describe('VirtualList', () => {
 	});
 
 	it('should invoke the `onScroll` event function', () => {
-		const scrollHandler = jest.fn();
+		const scrollHandler = vi.fn();
 		render(<VirtualList {...defaultProps} onScroll={scrollHandler} />);
 
 		scrollHandler.mockClear();
@@ -321,7 +307,7 @@ describe('VirtualList', () => {
 			sharedProps: {},
 			initState: {},
 		};
-		const sCU = jest.spyOn(VirtualList.prototype, 'shouldComponentUpdate');
+		const sCU = vi.spyOn(VirtualList.prototype, 'shouldComponentUpdate');
 		const { rerender } = render(<VirtualList {...prevProps} />);
 
 		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
@@ -343,7 +329,7 @@ describe('VirtualList', () => {
 	});
 
 	it('should handle the measurement when item is no longer visible', () => {
-		const spiedFn = jest.spyOn(VirtualList.prototype, 'render');
+		const spiedFn = vi.spyOn(VirtualList.prototype, 'render');
 		const { container, getAllByText } = render(<VirtualList {...defaultProps} />);
 		const list = container.firstElementChild as HTMLElement;
 		const firstlyRenderedItems = getAllByText(/ListItem/);

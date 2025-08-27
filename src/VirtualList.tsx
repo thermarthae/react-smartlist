@@ -5,7 +5,7 @@ import {
 } from 'react';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import VirtualListItem, { TSharedProps } from './VirtualListItem';
+import VirtualListItem, { TSharedProps } from './VirtualListItem.tsx';
 
 export type TItemID = string | number;
 

@@ -1,10 +1,13 @@
-import { jest } from '@jest/globals';
+import {
+	reset,
+	unstable_flushAllWithoutAsserting as flushAllWithoutAsserting,
+} from 'scheduler/unstable_mock';
+import { beforeEach, vi } from 'vitest';
 
-jest.mock('scheduler', () => {
-	const scheduler = jest.requireActual<typeof import('scheduler')>('scheduler/unstable_mock');
+vi.mock('scheduler/unstable_mock', { spy: true });
+vi.mock('scheduler', async () => import('scheduler/unstable_mock'));
 
-	return {
-		...scheduler,
-		unstable_scheduleCallback: jest.fn(scheduler.unstable_scheduleCallback),
-	};
+beforeEach(() => {
+	flushAllWithoutAsserting();
+	reset();
 });

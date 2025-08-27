@@ -5,14 +5,12 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "vscode-jest-tests",
+			"name": "test",
 			"type": "node",
 			"request": "launch",
 			"runtimeExecutable": "yarn",
 			"args": [
-				"test",
-				"--runInBand",
-				"--watch"
+				"test"
 			],
 			"cwd": "${workspaceFolder}",
 			"console": "integratedTerminal",

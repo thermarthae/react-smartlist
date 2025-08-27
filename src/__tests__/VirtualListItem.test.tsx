@@ -2,87 +2,61 @@ import {
 	act,
 	render,
 } from '@testing-library/react';
+import scheduler, {
+	CallbackNode,
+	unstable_hasPendingWork as hasPendingWork,
+	unstable_LowPriority as LowPriority,
+	unstable_scheduleCallback as scheduleCallback,
+	unstable_UserBlockingPriority as UserBlockingPriority,
+} from 'scheduler/unstable_mock';
 import {
-	beforeEach,
 	describe,
 	expect,
 	it,
-	jest,
-} from '@jest/globals';
-import type { CallbackNode } from 'scheduler';
+	vi,
+} from 'vitest';
 
-import type { TEntry } from '../VirtualList';
-import type { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem';
+import type { TEntry } from '../VirtualList.tsx';
+import VirtualListItem, { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem.tsx';
 
 type TItem = { id: number };
 
-let React: typeof import('react');
-let scheduler: typeof import('scheduler') & {
-	unstable_flushAll: () => void;
-	unstable_hasPendingWork: () => void;
-	unstable_scheduleCallback: jest.Mock<typeof import('scheduler').unstable_scheduleCallback>;
-};
-
-let hasPendingWork: typeof scheduler.unstable_hasPendingWork;
-let getLastScheduledNode: () => CallbackNode | undefined;
-let LowPriority: typeof scheduler.unstable_LowPriority;
-let UserBlockingPriority: typeof scheduler.unstable_UserBlockingPriority;
-
-let VirtualListItem: typeof import('../VirtualListItem').default;
-
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 describe('VirtualListItem', () => {
-	let onMeasureFn: jest.Mock<(item: TEntry<TItem>) => void>;
-	let ItemComponent: jest.Mock<React.FunctionComponent<TChildrenProps<TItem, HTMLDivElement> & {
-		height?: number;
-	}>>;
-	let defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent>;
+	const getLastScheduledNode = () => vi.mocked(scheduleCallback).mock
+		.results.at(-1)?.value as CallbackNode | undefined;
+
+	const onMeasureFn = vi.fn<(item: TEntry<TItem>) => void>();
+	const ItemComponent = vi.fn(({
+		rootElProps,
+		innerRef,
+		height,
+		...rest
+	}: TChildrenProps<TItem, HTMLDivElement> & { height?: number }) => (
+		<div
+			{...rootElProps}
+			style={{
+				...rootElProps.style,
+				height,
+			}}
+			ref={innerRef}
+			children={JSON.stringify(rest)}
+		/>
+	));
+	const defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent> = {
+		component: ItemComponent,
+		itWasMeasured: false,
+		itemID: 0,
+		itemData: { id: 0 },
+		itemIndex: 0,
+		nailPoint: 0,
+		onMeasure: onMeasureFn,
+	};
 
 	const triggerMeasurement = () => act(() => {
-		jest.runAllTimers();
+		vi.runAllTimers();
 		scheduler.unstable_flushAll();
-	});
-
-	beforeEach(async () => {
-		jest.resetModules();
-
-		React = await import('react');
-		scheduler = await import('scheduler') as unknown as typeof scheduler;
-		hasPendingWork = scheduler.unstable_hasPendingWork;
-		getLastScheduledNode = () => scheduler.unstable_scheduleCallback.mock.results.at(-1)?.value as CallbackNode;
-		LowPriority = scheduler.unstable_LowPriority;
-		UserBlockingPriority = scheduler.unstable_UserBlockingPriority;
-
-		VirtualListItem = (await import('../VirtualListItem')).default;
-
-		onMeasureFn = jest.fn();
-		ItemComponent = jest.fn(({
-			rootElProps,
-			innerRef,
-			height,
-			...rest
-		}) => (
-			<div
-				{...rootElProps}
-				style={{
-					...rootElProps.style,
-					height,
-				}}
-				ref={innerRef}
-				children={JSON.stringify(rest)}
-			/>
-		));
-
-		defaultProps = {
-			component: ItemComponent,
-			itWasMeasured: false,
-			itemID: 0,
-			itemData: { id: 0 },
-			itemIndex: 0,
-			nailPoint: 0,
-			onMeasure: onMeasureFn,
-		};
 	});
 
 	it('should render', () => {
@@ -156,7 +130,7 @@ describe('VirtualListItem', () => {
 			...defaultProps,
 			sharedProps: {},
 		};
-		const sCU = jest.spyOn(VirtualListItem.prototype, 'shouldComponentUpdate');
+		const sCU = vi.spyOn(VirtualListItem.prototype, 'shouldComponentUpdate');
 		const { rerender } = render(<VirtualListItem {...prevProps} />);
 
 		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {

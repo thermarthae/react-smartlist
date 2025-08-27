@@ -13,7 +13,7 @@ import {
 } from 'scheduler';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import { TEntry, TItemID } from './VirtualList';
+import { TEntry, TItemID } from './VirtualList.tsx';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {
