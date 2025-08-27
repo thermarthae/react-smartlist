@@ -32,7 +32,7 @@
 		"./tests",
 		"./types",
 		"./eslint.config.js",
-		"./rollup.config.js",
+		"./rolldown.config.ts",
 		"./vite.config.ts",
 	]
 }
