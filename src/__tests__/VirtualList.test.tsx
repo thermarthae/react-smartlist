@@ -113,7 +113,7 @@ describe('VirtualList', () => {
 	});
 
 	it('should measure items and update the list height', () => {
-		const { container } = render(<VirtualList {...defaultProps} />);
+		const { container, getAllByText } = render(<VirtualList {...defaultProps} />);
 		const list = container.firstElementChild as HTMLElement;
 
 		const nailPoints = genNailPoints();
@@ -122,7 +122,13 @@ describe('VirtualList', () => {
 		const expectedListHeight = nailPoints[expectedItemsCount]
 			+ (nailPoints.length - expectedItemsCount) * estimatedItemHeight;
 
+		const hasMeasuredItemsBefore = getAllByText(/ListItem/).every(el => el.dataset.measured === 'true');
+		expect(hasMeasuredItemsBefore).toBeFalsy();
+
 		triggerMeasurement();
+
+		const hasMeasuredItemsAfter = getAllByText(/ListItem/).every(el => el.dataset.measured === 'true');
+		expect(hasMeasuredItemsAfter).toBeTruthy();
 
 		expect(list.childElementCount).toEqual(expectedItemsCount);
 		expect(list.style.height).toEqual(`${expectedListHeight}px`);
