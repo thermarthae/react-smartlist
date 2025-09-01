@@ -38,12 +38,12 @@ import VirtualList from '@thermarthae/react-smartlist';
 
 const ListItem = React.memo(({
   rootElProps,
-  innerRef,
+  ref,
   data,
 }) => (
   <div
     {...rootElProps}
-    ref={innerRef}
+    ref={ref}
     style={{
       ...rootElProps.style,
       height: data.height,

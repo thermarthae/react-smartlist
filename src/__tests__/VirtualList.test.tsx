@@ -50,13 +50,11 @@ describe('VirtualList', () => {
 	const itemKeyFn = vi.fn((item: TItem) => item.id);
 	const ItemComponent = vi.fn(({
 		rootElProps,
-		innerRef,
 		data,
 		title,
 	}: TChildrenProps<TItem, HTMLDivElement> & TSharedProps) => (
 		<div
 			{...rootElProps}
-			ref={innerRef}
 			style={{ ...rootElProps.style, height: data.height }}
 			title={title}
 			data-id={data.id}

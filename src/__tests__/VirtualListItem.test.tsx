@@ -30,7 +30,6 @@ describe('VirtualListItem', () => {
 	const onMeasureFn = vi.fn<(item: TEntry<TItem>) => void>();
 	const ItemComponent = vi.fn(({
 		rootElProps,
-		innerRef,
 		height,
 		...rest
 	}: TChildrenProps<TItem, HTMLDivElement> & { height?: number }) => (
@@ -40,7 +39,6 @@ describe('VirtualListItem', () => {
 				...rootElProps.style,
 				height,
 			}}
-			ref={innerRef}
 			children={JSON.stringify(rest)}
 		/>
 	));
