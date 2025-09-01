@@ -47,7 +47,6 @@ describe('VirtualList', () => {
 		flushAll();
 	});
 
-	const itemKeyFn = vi.fn((item: TItem) => item.id);
 	const ItemComponent = vi.fn(({
 		rootElProps,
 		data,
@@ -66,7 +65,6 @@ describe('VirtualList', () => {
 		component: ItemComponent,
 		items: genItemArray(50),
 		estimatedItemHeight,
-		itemKey: itemKeyFn,
 		overscanPadding: 0,
 	};
 	const estimatedNailPoints = defaultProps.items.map((_data, index) => index * estimatedItemHeight);
@@ -91,7 +89,6 @@ describe('VirtualList', () => {
 		render(<VirtualList {...defaultProps} items={[]} />);
 
 		expect(ItemComponent).not.toHaveBeenCalled();
-		expect(itemKeyFn).not.toHaveBeenCalled();
 	});
 
 	it('should render a simple list', () => {
@@ -319,7 +316,6 @@ describe('VirtualList', () => {
 		testProps({}, false);
 		testProps({ items: genItemArray(3) }, true);
 		testProps({ estimatedItemHeight: 90 }, true);
-		testProps({ itemKey: () => Math.random() }, true);
 		testProps({ overscanPadding: 90 }, true);
 		testProps({ className: 'test2' }, true);
 		testProps({ sharedProps: { x: 2 } }, true);

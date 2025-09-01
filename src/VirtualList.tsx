@@ -8,6 +8,10 @@ import { shallowEqualObjects } from 'shallow-equal';
 import VirtualListItem, { TSharedProps } from './VirtualListItem.tsx';
 
 export type TItemID = string | number;
+export type TItem = {
+	id: TItemID;
+	[key: PropertyKey]: unknown;
+};
 
 export type TWindowEdges = {
 	top: number;
@@ -27,7 +31,7 @@ export type TEntry<Item> = {
 
 //
 
-export type TProps<I extends object = object, C extends ElementType = ElementType> = {
+export type TProps<I extends TItem = TItem, C extends ElementType = ElementType> = {
 	/**
 	 * Your component that is used to render a single list item.
 	 */
@@ -51,15 +55,6 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	 * when the actual items are rendered, we measure them and repeats all calculations.
 	 */
 	estimatedItemHeight: number;
-	/**
-	 * A factory function that returns (extracts) an ID from the item.
-	 *
-	 * Every item in the list must be identified by its unique ID.
-	 *
-	 * Remember that this function will be called many times,
-	 * so any fancy function may negatively affect your rendering performance.
-	 */
-	itemKey: (item: I) => TItemID;
 	/**
 	 * This value increases the overall viewport area.
 	 * Defines how many pixels *beyond the horizon* should be overscaned.
@@ -101,7 +96,7 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	style?: React.CSSProperties | undefined;
 };
 
-type TState<I extends object = object> = {
+type TState<I extends TItem = TItem> = {
 	/** @ignore */
 	memoizedItemsArray: readonly I[];
 	heightCache: Map<TItemID, number>;
@@ -113,14 +108,14 @@ type TState<I extends object = object> = {
 	lastIndex: number;
 };
 
-class VirtualList<I extends object, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
+class VirtualList<I extends TItem, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
 	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
-			const { items, estimatedItemHeight, itemKey } = props;
+			const { items, estimatedItemHeight } = props;
 			const { heightCache } = state;
 			const arrLastIndex = Math.max(0, items.length - 1); // HACK: `items` may be empty!
 			const nailPoints = [0];
-			const getHeight = (i: number) => heightCache.get(itemKey(items[i])) ?? estimatedItemHeight;
+			const getHeight = (i: number) => heightCache.get(items[i].id) ?? estimatedItemHeight;
 
 			for (let i = 0; i < arrLastIndex; i += 1) {
 				const nailPoint = nailPoints[i];
@@ -152,7 +147,6 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	public state: TState<I> = (() => {
 		const {
 			items,
-			itemKey,
 			disableMeasurment,
 			estimatedItemHeight,
 			initState,
@@ -163,7 +157,7 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			heightCache: new Map(
 				!disableMeasurment
 					? undefined
-					: items.map(item => [itemKey(item), estimatedItemHeight]),
+					: items.map(item => [item.id, estimatedItemHeight]),
 			),
 			heightCacheVersion: 0,
 			isInView: true,
@@ -210,8 +204,8 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 		const pivot = s.firstIndex;
 
 		for (let i = s.firstIndex + 1; i <= s.lastIndex; i += 1) {
-			const key = this.props.itemKey(this.props.items[i]);
-			if (s.heightCache.has(key)) return i;
+			const id = this.props.items[i].id;
+			if (s.heightCache.has(id)) return i;
 		}
 
 		return pivot;
@@ -341,15 +335,13 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 	};
 
 	private readonly getItemHeight = (item: I) => {
-		const key = this.props.itemKey(item);
-		return this.state.heightCache.get(key) ?? this.props.estimatedItemHeight;
+		return this.state.heightCache.get(item.id) ?? this.props.estimatedItemHeight;
 	};
 
 	public render() {
 		const {
 			component,
 			items,
-			itemKey,
 			className,
 			sharedProps,
 			disableMeasurment,
@@ -378,16 +370,15 @@ class VirtualList<I extends object, C extends ElementType> extends Component<TPr
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
 					const index = firstIndex + i;
-					const itemID = itemKey(itemData);
 
 					return (
 						<VirtualListItem
-							key={itemID}
-							itemID={itemID}
+							key={itemData.id}
+							itemID={itemData.id}
 							itemIndex={index}
 							component={component}
 							itemData={itemData}
-							itWasMeasured={heightCache.has(itemID)}
+							itWasMeasured={heightCache.has(itemData.id)}
 							nailPoint={nailPoints[index]}
 							sharedProps={sharedProps}
 							onMeasure={this.handleMeasure}
