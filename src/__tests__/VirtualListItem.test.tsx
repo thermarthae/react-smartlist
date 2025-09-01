@@ -44,7 +44,7 @@ describe('VirtualListItem', () => {
 	));
 	const defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent> = {
 		component: ItemComponent,
-		itWasMeasured: false,
+		isAlreadyMeasured: false,
 		itemID: 0,
 		itemData: { id: 0 },
 		itemIndex: 0,
@@ -72,7 +72,7 @@ describe('VirtualListItem', () => {
 		triggerMeasurement();
 
 		// everything except the first render has LowPriority:
-		render(<VirtualListItem {...defaultProps} itWasMeasured />);
+		render(<VirtualListItem {...defaultProps} isAlreadyMeasured />);
 		expect(getLastScheduledNode()?.priorityLevel).toBe(LowPriority);
 	});
 
@@ -144,7 +144,7 @@ describe('VirtualListItem', () => {
 		testProps({ itemData: { id: 52 } }, true);
 		testProps({ itemIndex: 43 }, true);
 		testProps({ nailPoint: 91 }, true);
-		testProps({ itWasMeasured: !prevProps.itWasMeasured }, true);
+		testProps({ isAlreadyMeasured: !prevProps.isAlreadyMeasured }, true);
 		testProps({ onMeasure: () => 0 }, true);
 		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
 		testProps({ sharedProps: { x: 2 } }, true);

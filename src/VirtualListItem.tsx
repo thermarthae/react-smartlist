@@ -18,7 +18,7 @@ import { TEntry, TItemID } from './VirtualList.tsx';
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {
 	data: Item;
-	itWasMeasured: boolean;
+	isAlreadyMeasured: boolean;
 	rootElProps: {
 		ref: React.Ref<Ref>;
 		'data-index': number;
@@ -38,9 +38,9 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	itemData: I;
 	itemIndex: number;
 	nailPoint: number;
-	itWasMeasured: boolean;
 	onMeasure: (item: TEntry<I>) => void;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
+	isAlreadyMeasured: boolean;
 	isMeasurmentDisabled?: boolean;
 };
 
@@ -85,7 +85,7 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 		if (this.props.isMeasurmentDisabled) return;
 
 		// Use lower priority for already cached items
-		const priority = this.props.itWasMeasured ? LowPriority : UserBlockingPriority;
+		const priority = this.props.isAlreadyMeasured ? LowPriority : UserBlockingPriority;
 		this.scheduledObserver = scheduleCallback(priority, () => {
 			if (!this.itemElRef.current) return;
 			this.resizeObserver = new ResizeObserver(this.measureHeight);
@@ -125,7 +125,7 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 			component,
 			itemData,
 			sharedProps,
-			itWasMeasured,
+			isAlreadyMeasured,
 			nailPoint,
 			itemIndex,
 		} = this.props;
@@ -135,11 +135,11 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 			{
 				...(sharedProps ?? {}),
 				data: itemData,
-				itWasMeasured,
+				isAlreadyMeasured,
 				rootElProps: {
 					ref: this.itemElRef,
 					'data-index': itemIndex,
-					'data-measured': itWasMeasured,
+					'data-measured': isAlreadyMeasured,
 					style: {
 						position: 'absolute',
 						width: '100%',

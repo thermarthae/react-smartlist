@@ -378,7 +378,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 							itemIndex={index}
 							component={component}
 							itemData={itemData}
-							itWasMeasured={heightCache.has(itemData.id)}
+							isAlreadyMeasured={heightCache.has(itemData.id)}
 							nailPoint={nailPoints[index]}
 							sharedProps={sharedProps}
 							onMeasure={this.handleMeasure}
