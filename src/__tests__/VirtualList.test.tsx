@@ -5,7 +5,6 @@ import {
 } from '@testing-library/react';
 import { unstable_flushAll as flushAll } from 'scheduler/unstable_mock';
 import {
-	beforeEach,
 	describe,
 	expect,
 	it,
@@ -65,22 +64,6 @@ describe('VirtualList', () => {
 		overscanPadding: 0,
 	};
 	const estimatedNailPoints = defaultProps.items.map((_data, index) => index * estimatedItemHeight);
-
-	beforeEach(() => {
-		document.documentElement.scrollTop = 0;
-
-		// JSdom does not do actual layout and so doesn't return meaningful values here.
-		// For the purposes of our tests though, we can mock out semi-meaningful values.
-		// This mock is required for e.g. "onScroll" tests to work properly.
-		Object.defineProperties(HTMLElement.prototype, {
-			scrollHeight: {
-				configurable: true,
-				get(this: HTMLDivElement) {
-					return parseInt(this.style.height, 10);
-				},
-			},
-		});
-	});
 
 	it('should render an empty list', () => {
 		render(<VirtualList {...defaultProps} items={[]} />);
