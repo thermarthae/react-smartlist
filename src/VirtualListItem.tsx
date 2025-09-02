@@ -13,8 +13,6 @@ import {
 } from 'scheduler';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import { TEntry, TItemID } from './VirtualList.tsx';
-
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
 export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {
 	data: Item;
@@ -34,14 +32,17 @@ export type TChildrenProps<Item extends object = object, Ref extends HTMLElement
 
 export type TProps<I extends object = object, C extends ElementType = ElementType> = {
 	component: C;
-	itemID: TItemID;
 	itemData: I;
 	itemIndex: number;
 	nailPoint: number;
-	onMeasure: (item: TEntry<I>) => void;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 	isAlreadyMeasured: boolean;
 	isMeasurmentDisabled?: boolean;
+	onMeasure: {
+		/**  React memo helper to check whether `onMeasure` actually differs */
+		key?: string;
+		(height: number): void;
+	};
 };
 
 class VirtualListItem<I extends object, C extends ElementType> extends Component<TProps<I, C>> {
@@ -57,11 +58,12 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 
 	public shouldComponentUpdate(nextProps: TProps<I, C>) {
 		if (this.props !== nextProps) {
-			const { itemData: data, sharedProps: SP, ...prevRest } = this.props;
-			const { itemData: nextData, sharedProps: nextSP, ...nextRest } = nextProps;
+			const { itemData: data, sharedProps: SP, onMeasure, ...prevRest } = this.props;
+			const { itemData: nextData, sharedProps: nextSP, onMeasure: nextOnMeasure, ...nextRest } = nextProps;
 
 			if (
-				!shallowEqualObjects(prevRest, nextRest)
+				onMeasure.key !== nextOnMeasure.key
+				|| !shallowEqualObjects(prevRest, nextRest)
 				|| !shallowEqualObjects(data, nextData)
 				|| !shallowEqualObjects(SP, nextSP)
 			) return true;
@@ -100,24 +102,10 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 	};
 
 	private readonly measureHeight: ResizeObserverCallback = ([entry]) => {
-		const {
-			onMeasure,
-			itemID,
-			itemIndex,
-			itemData,
-		} = this.props;
-
 		const height = entry.borderBoxSize?.[0].blockSize ?? 0;
-		if (height === 0) {
-			return;
-		}
+		if (height === 0) return;
 
-		onMeasure({
-			id: itemID,
-			index: itemIndex,
-			data: itemData,
-			height,
-		});
+		this.props.onMeasure(height);
 	};
 
 	public render() {

@@ -16,7 +16,6 @@ import {
 	vi,
 } from 'vitest';
 
-import type { TEntry } from '../VirtualList.tsx';
 import VirtualListItem, { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem.tsx';
 
 type TItem = { id: number };
@@ -27,7 +26,7 @@ describe('VirtualListItem', () => {
 	const getLastScheduledNode = () => vi.mocked(scheduleCallback).mock
 		.results.at(-1)?.value as CallbackNode | undefined;
 
-	const onMeasureFn = vi.fn<(item: TEntry<TItem>) => void>();
+	const onMeasureFn = vi.fn<(height: number) => void>();
 	const ItemComponent = vi.fn(({
 		rootElProps,
 		height,
@@ -45,7 +44,6 @@ describe('VirtualListItem', () => {
 	const defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent> = {
 		component: ItemComponent,
 		isAlreadyMeasured: false,
-		itemID: 0,
 		itemData: { id: 0 },
 		itemIndex: 0,
 		nailPoint: 0,
@@ -109,34 +107,32 @@ describe('VirtualListItem', () => {
 	});
 
 	it('should trigger the onMeasure event', () => {
-		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 1 }} />);
+		const height = 3;
+		render(<VirtualListItem {...defaultProps} sharedProps={{ height }} />);
 
 		// give a scheduler some time to attach the listener
 		triggerMeasurement();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
-		expect(onMeasureFn).toHaveBeenCalledWith({
-			id: defaultProps.itemID,
-			index: defaultProps.itemIndex,
-			data: defaultProps.itemData,
-			height: 1,
-		});
+		expect(onMeasureFn).toHaveBeenCalledWith(height);
 	});
 
 	it('should not rerender when it is unnecessary', () => {
+		const makeMeasureFn = (key = '0') => Object.assign(() => 0, { key });
+
 		let prevProps: TVirtualListItemProps<TItem> = {
 			...defaultProps,
+			onMeasure: makeMeasureFn(),
 			sharedProps: {},
 		};
-		const sCU = vi.spyOn(VirtualListItem.prototype, 'shouldComponentUpdate');
 		const { rerender } = render(<VirtualListItem {...prevProps} />);
 
 		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
-			sCU.mockClear();
+			ItemComponent.mockClear();
 			prevProps = { ...prevProps, ...newProps };
 			rerender(<VirtualListItem {...prevProps} />);
 
-			expect(sCU).toHaveNthReturnedWith(1, shouldRerender);
+			expect(ItemComponent).toHaveBeenCalledTimes(shouldRerender ? 1 : 0);
 		};
 
 		testProps({}, false);
@@ -145,7 +141,8 @@ describe('VirtualListItem', () => {
 		testProps({ itemIndex: 43 }, true);
 		testProps({ nailPoint: 91 }, true);
 		testProps({ isAlreadyMeasured: !prevProps.isAlreadyMeasured }, true);
-		testProps({ onMeasure: () => 0 }, true);
+		testProps({ onMeasure: makeMeasureFn(prevProps.onMeasure.key) }, false);
+		testProps({ onMeasure: makeMeasureFn('1') }, true);
 		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
 		testProps({ sharedProps: { x: 2 } }, true);
 	});

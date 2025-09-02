@@ -22,15 +22,6 @@ export type TWindowEdges = {
 	isInView: boolean;
 };
 
-export type TEntry<Item> = {
-	id: TItemID;
-	index: number;
-	height: number;
-	data: Item;
-};
-
-//
-
 export type TProps<I extends TItem = TItem, C extends ElementType = ElementType> = {
 	/**
 	 * Your component that is used to render a single list item.
@@ -289,9 +280,9 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		return { isInView, firstIndex, lastIndex };
 	};
 
-	private readonly handleMeasure = (entry: TEntry<I>) => {
+	private readonly handleMeasure = (id: TItemID, entryIndex: number, entryHeight: number) => {
 		this.setState((state, { items }) => {
-			if (state.heightCache.get(entry.id) === entry.height) return null;
+			if (state.heightCache.get(id) === entryHeight) return null;
 
 			const pivotIndex = this.getPivot();
 			const pivot = items[pivotIndex];
@@ -300,12 +291,12 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 			// To update the height of an item, we are *mutating* the `heightCache` map.
 			// Unluckily, React will not detect our direct change.
 			// To let him know about the change, we are just bumping a dummy `heightCacheVersion` state.
-			state.heightCache.set(entry.id, entry.height);
+			state.heightCache.set(id, entryHeight);
 			const heightCacheVersion = state.heightCacheVersion + 1;
 
-			const nailPoints = state.nailPoints.slice(0, entry.index + 1);
+			const nailPoints = state.nailPoints.slice(0, entryIndex + 1);
 
-			for (let i = entry.index; i < items.length - 1; i += 1) {
+			for (let i = entryIndex; i < items.length - 1; i += 1) {
 				const nailPoint = nailPoints[i];
 				const height = this.getItemHeight(items[i]);
 
@@ -313,7 +304,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 			}
 
 			const listHeight = nailPoints.at(-1)! + this.getItemHeight(items.at(-1)!);
-			const changeAbovePivot = (entry.index < pivotIndex || state.lastIndex <= pivotIndex);
+			const changeAbovePivot = (entryIndex < pivotIndex || state.lastIndex <= pivotIndex);
 			const listShrinks = listHeight < state.listHeight;
 
 			if (changeAbovePivot || listShrinks) {
@@ -370,18 +361,19 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 			>
 				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
 					const index = firstIndex + i;
+					const onMeasure = (height: number) => this.handleMeasure(itemData.id, index, height);
+					onMeasure.key = `${itemData.id} ${index}`;
 
 					return (
 						<VirtualListItem
 							key={itemData.id}
-							itemID={itemData.id}
 							itemIndex={index}
 							component={component}
 							itemData={itemData}
 							isAlreadyMeasured={heightCache.has(itemData.id)}
 							nailPoint={nailPoints[index]}
 							sharedProps={sharedProps}
-							onMeasure={this.handleMeasure}
+							onMeasure={onMeasure}
 							isMeasurmentDisabled={disableMeasurment}
 						/>
 					);

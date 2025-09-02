@@ -335,17 +335,12 @@ describe('VirtualList', () => {
 		const firstlyRenderedItems = getAllByText(/ListItem/);
 		const firstListHeight = parseInt(list.style.height, 10);
 
-		// @ts-expect-error Hack used to trigger `handleMeasure` method
-		const measureFn = (spiedFn.mock.instances[0] as unknown as typeof VirtualList.prototype).handleMeasure;
+		// @ts-expect-error Hack to trigger `handleMeasure` on an umnounted item
+		const measureFn = (spiedFn.mock.instances[0] as InstanceType<typeof VirtualList>).handleMeasure;
 
 		const item = defaultProps.items[30];
 		const height = 9999;
-		act(() => measureFn({
-			id: item.id,
-			index: item.id,
-			data: item,
-			height,
-		}));
+		act(() => measureFn(item.id, item.id, height));
 
 		expect(getAllByText(/ListItem/)).toEqual(firstlyRenderedItems);
 		expect(parseInt(list.style.height, 10)).toEqual(firstListHeight + height - estimatedItemHeight);
