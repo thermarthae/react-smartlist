@@ -2,10 +2,11 @@
 
 exports[`VirtualListItem > should render 1`] = `
 <div
+  data-id="0"
   data-index="0"
   data-measured="false"
   style="position: absolute; width: 100%; transform: translateY(0px); contain: content;"
 >
-  {"data":{"id":0},"isAlreadyMeasured":false}
+  ListItem
 </div>
 `;

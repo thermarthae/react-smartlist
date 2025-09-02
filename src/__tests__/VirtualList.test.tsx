@@ -15,13 +15,15 @@ import {
 import VirtualList, { TProps as TVirtualListProps } from '../VirtualList.tsx';
 import type { TChildrenProps } from '../VirtualListItem.tsx';
 
-type TItem = {
-	id: number;
-	height: number;
-};
 type TSharedProps = {
 	title?: string;
 };
+type TItemData = {
+	id: number;
+	height: number;
+};
+type TItemComponentProps = TChildrenProps<TItemData, HTMLDivElement> & TSharedProps;
+type TListProps = TVirtualListProps<TItemData, React.FC<TItemComponentProps>>;
 
 vi.useFakeTimers();
 
@@ -29,7 +31,7 @@ describe('VirtualList', () => {
 	const estimatedItemHeight = 50;
 	const windowInnerHeight = 768; // jsdom sets 768px as a default `window.innerHeight` value
 
-	const genItemArray = (length: number): TItem[] => [...Array(length) as unknown[]].map((_v, index) => ({
+	const genItemArray = (length: number): TItemData[] => [...Array(length) as unknown[]].map((_v, index) => ({
 		id: index,
 		height: (index % 10 === 0) ? 100 : 50,
 	}));
@@ -47,11 +49,7 @@ describe('VirtualList', () => {
 		flushAll();
 	});
 
-	const ItemComponent = vi.fn(({
-		rootElProps,
-		data,
-		title,
-	}: TChildrenProps<TItem, HTMLDivElement> & TSharedProps) => (
+	const ItemComponent = vi.fn(({ rootElProps, title, data }: TItemComponentProps) => (
 		<div
 			{...rootElProps}
 			style={{ ...rootElProps.style, height: data.height }}
@@ -61,7 +59,7 @@ describe('VirtualList', () => {
 			children="ListItem"
 		/>
 	));
-	const defaultProps: TVirtualListProps<TItem> = {
+	const defaultProps: TListProps = {
 		component: ItemComponent,
 		items: genItemArray(50),
 		estimatedItemHeight,
@@ -286,7 +284,7 @@ describe('VirtualList', () => {
 	});
 
 	it('should not jump when measured item is larger than viewport', () => {
-		const items: TItem[] = [
+		const items: TItemData[] = [
 			{ id: 0, height: windowInnerHeight * 2 },
 			...defaultProps.items.slice(1),
 		];
@@ -302,16 +300,16 @@ describe('VirtualList', () => {
 	});
 
 	it('should not rerender when it is unnecessary', () => {
-		let prevProps: TVirtualListProps<TItem> = {
+		let prevProps: TListProps = {
 			...defaultProps,
 			className: 'test1',
-			sharedProps: {},
+			sharedProps: { title: '0' },
 			initState: {},
 		};
 		const sCU = vi.spyOn(VirtualList.prototype, 'shouldComponentUpdate');
 		const { rerender } = render(<VirtualList {...prevProps} />);
 
-		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
+		const testProps = (newProps: Partial<TListProps>, shouldRerender: boolean) => {
 			sCU.mockClear();
 			prevProps = { ...prevProps, ...newProps };
 			rerender(<VirtualList {...prevProps} />);
@@ -324,7 +322,7 @@ describe('VirtualList', () => {
 		testProps({ estimatedItemHeight: 90 }, true);
 		testProps({ overscanPadding: 90 }, true);
 		testProps({ className: 'test2' }, true);
-		testProps({ sharedProps: { x: 2 } }, true);
+		testProps({ sharedProps: { title: '1' } }, true);
 		testProps({ initState: { lastIndex: 3 } }, false);
 	});
 

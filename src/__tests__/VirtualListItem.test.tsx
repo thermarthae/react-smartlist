@@ -18,7 +18,12 @@ import {
 
 import VirtualListItem, { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem.tsx';
 
-type TItem = { id: number };
+type TSharedProps = {
+	title?: string;
+};
+type TItemData = { id: number; height: number };
+type TItemComponentProps = TChildrenProps<TItemData, HTMLDivElement> & TSharedProps;
+type TListItemProps = TVirtualListItemProps<TItemData, React.FC<TItemComponentProps>>;
 
 vi.useFakeTimers();
 
@@ -27,24 +32,20 @@ describe('VirtualListItem', () => {
 		.results.at(-1)?.value as CallbackNode | undefined;
 
 	const onMeasureFn = vi.fn<(height: number) => void>();
-	const ItemComponent = vi.fn(({
-		rootElProps,
-		height,
-		...rest
-	}: TChildrenProps<TItem, HTMLDivElement> & { height?: number }) => (
+	const ItemComponent = vi.fn(({ rootElProps, title, data }: TItemComponentProps) => (
 		<div
 			{...rootElProps}
-			style={{
-				...rootElProps.style,
-				height,
-			}}
-			children={JSON.stringify(rest)}
+			style={{ ...rootElProps.style, height: data.height }}
+			title={title}
+			data-id={data.id}
+			data-height={data.height}
+			children="ListItem"
 		/>
 	));
-	const defaultProps: TVirtualListItemProps<TItem, typeof ItemComponent> = {
+	const defaultProps: TListItemProps = {
 		component: ItemComponent,
 		isAlreadyMeasured: false,
-		itemData: { id: 0 },
+		itemData: { id: 0, height: 10 },
 		itemIndex: 0,
 		nailPoint: 0,
 		onMeasure: onMeasureFn,
@@ -98,7 +99,7 @@ describe('VirtualListItem', () => {
 	});
 
 	it('should not trigger the onMeasure event when height is equal to 0', () => {
-		render(<VirtualListItem {...defaultProps} sharedProps={{ height: 0 }} />);
+		render(<VirtualListItem {...defaultProps} itemData={{ id: 1, height: 0 }} />);
 
 		// give a scheduler some time to attach the listener
 		triggerMeasurement();
@@ -108,7 +109,7 @@ describe('VirtualListItem', () => {
 
 	it('should trigger the onMeasure event', () => {
 		const height = 3;
-		render(<VirtualListItem {...defaultProps} sharedProps={{ height }} />);
+		render(<VirtualListItem {...defaultProps} itemData={{ id: 1, height }} />);
 
 		// give a scheduler some time to attach the listener
 		triggerMeasurement();
@@ -120,14 +121,14 @@ describe('VirtualListItem', () => {
 	it('should not rerender when it is unnecessary', () => {
 		const makeMeasureFn = (key = '0') => Object.assign(() => 0, { key });
 
-		let prevProps: TVirtualListItemProps<TItem> = {
+		let prevProps: TListItemProps = {
 			...defaultProps,
 			onMeasure: makeMeasureFn(),
-			sharedProps: {},
+			sharedProps: { title: '0' },
 		};
 		const { rerender } = render(<VirtualListItem {...prevProps} />);
 
-		const testProps = (newProps: Partial<typeof prevProps>, shouldRerender: boolean) => {
+		const testProps = (newProps: Partial<TListItemProps>, shouldRerender: boolean) => {
 			ItemComponent.mockClear();
 			prevProps = { ...prevProps, ...newProps };
 			rerender(<VirtualListItem {...prevProps} />);
@@ -137,13 +138,13 @@ describe('VirtualListItem', () => {
 
 		testProps({}, false);
 		testProps({ itemData: { ...prevProps.itemData } }, false);
-		testProps({ itemData: { id: 52 } }, true);
+		testProps({ itemData: { id: 52, height: 100 } }, true);
 		testProps({ itemIndex: 43 }, true);
 		testProps({ nailPoint: 91 }, true);
 		testProps({ isAlreadyMeasured: !prevProps.isAlreadyMeasured }, true);
 		testProps({ onMeasure: makeMeasureFn(prevProps.onMeasure.key) }, false);
 		testProps({ onMeasure: makeMeasureFn('1') }, true);
 		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
-		testProps({ sharedProps: { x: 2 } }, true);
+		testProps({ sharedProps: { title: '1' } }, true);
 	});
 });
