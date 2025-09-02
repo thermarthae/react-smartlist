@@ -24,14 +24,14 @@ class ResizeObserverHack implements ResizeObserver {
 	public handleCallback = () => {
 		if (!this.target) throw new Error('no target');
 
-		if (this.lastHeight === this.target.style.height) return;
+		const { expectedHeight } = this.target.dataset;
+		if (!expectedHeight) throw new Error('no expectedHeight');
 
-		this.lastHeight = this.target.style.height;
-		const height = parseInt(this.target.style.height, 10);
+		if (this.lastHeight === expectedHeight) return;
+		this.lastHeight = expectedHeight;
 
-		if (Number.isFinite(height)) {
-			this.callback([{ borderBoxSize: [{ blockSize: height }] } as unknown as ResizeObserverEntry], this);
-		}
+		const blockSize = parseInt(expectedHeight, 10);
+		this.callback([{ borderBoxSize: [{ blockSize }] } as unknown as ResizeObserverEntry], this);
 	};
 
 	public observe(target: HTMLElement) {

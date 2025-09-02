@@ -35,10 +35,9 @@ describe('VirtualListItem', () => {
 	const ItemComponent = vi.fn(({ rootElProps, title, data }: TItemComponentProps) => (
 		<div
 			{...rootElProps}
-			style={{ ...rootElProps.style, height: data.height }}
 			title={title}
 			data-id={data.id}
-			data-height={data.height}
+			data-expected-height={data.height}
 			children="ListItem"
 		/>
 	));

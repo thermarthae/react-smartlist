@@ -2,6 +2,7 @@
 
 exports[`VirtualListItem > should render 1`] = `
 <div
+  data-expected-height="10"
   data-id="0"
   data-index="0"
   data-measured="false"
