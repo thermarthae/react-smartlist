@@ -2,11 +2,11 @@ import {
 	act,
 	render,
 } from '@testing-library/react';
-import scheduler, {
-	CallbackNode,
+import {
+	unstable_flushAll as flushAll,
+	unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
 	unstable_hasPendingWork as hasPendingWork,
 	unstable_LowPriority as LowPriority,
-	unstable_scheduleCallback as scheduleCallback,
 	unstable_UserBlockingPriority as UserBlockingPriority,
 } from 'scheduler/unstable_mock';
 import {
@@ -28,10 +28,7 @@ type TListItemProps = TVirtualListItemProps<TItemData, React.FC<TItemComponentPr
 vi.useFakeTimers();
 
 describe('VirtualListItem', () => {
-	const getLastScheduledNode = () => vi.mocked(scheduleCallback).mock
-		.results.at(-1)?.value as CallbackNode | undefined;
-
-	const onMeasureFn = vi.fn<(height: number) => void>();
+	const onMeasureFn = vi.fn();
 	const ItemComponent = vi.fn(({ rootElProps, title, data }: TItemComponentProps) => (
 		<div
 			{...rootElProps}
@@ -52,7 +49,7 @@ describe('VirtualListItem', () => {
 
 	const triggerMeasurement = () => act(() => {
 		vi.runAllTimers();
-		scheduler.unstable_flushAll();
+		flushAll();
 	});
 
 	it('should render', () => {
@@ -63,15 +60,17 @@ describe('VirtualListItem', () => {
 	});
 
 	it('should attach observers with correct priorities', () => {
-		// first render has an UserBlockingPriority:
-		render(<VirtualListItem {...defaultProps} />);
-		expect(getLastScheduledNode()?.priorityLevel).toBe(UserBlockingPriority);
+		const fn = vi.fn(() => getCurrentPriorityLevel());
 
+		// first render has an UserBlockingPriority:
+		render(<VirtualListItem {...defaultProps} onMeasure={fn} />);
 		triggerMeasurement();
+		expect(fn).lastReturnedWith(UserBlockingPriority);
 
 		// everything except the first render has LowPriority:
-		render(<VirtualListItem {...defaultProps} isAlreadyMeasured />);
-		expect(getLastScheduledNode()?.priorityLevel).toBe(LowPriority);
+		render(<VirtualListItem {...defaultProps} onMeasure={fn} isAlreadyMeasured />);
+		triggerMeasurement();
+		expect(fn).lastReturnedWith(LowPriority);
 	});
 
 	it('should not attach observers when measurment is disabled', () => {
@@ -90,11 +89,9 @@ describe('VirtualListItem', () => {
 	it('should abort an observer attachment at premature unmount', () => {
 		const { unmount } = render(<VirtualListItem {...defaultProps} />);
 
-		const node = getLastScheduledNode()!;
-		expect(node.callback).toBeDefined();
-
 		unmount();
-		expect(node.callback).toBeNull();
+		triggerMeasurement();
+		expect(onMeasureFn).not.toBeCalled();
 	});
 
 	it('should not trigger the onMeasure event when height is equal to 0', () => {
