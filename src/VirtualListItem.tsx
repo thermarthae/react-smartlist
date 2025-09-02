@@ -1,6 +1,5 @@
 import {
 	Component,
-	createElement,
 	createRef,
 	ElementType,
 } from 'react';
@@ -118,24 +117,26 @@ class VirtualListItem<I extends object, C extends ElementType> extends Component
 			itemIndex,
 		} = this.props;
 
-		return createElement(
-			component,
-			{
-				...(sharedProps ?? {}),
-				data: itemData,
-				isAlreadyMeasured,
-				rootElProps: {
-					ref: this.itemElRef,
-					'data-index': itemIndex,
-					'data-measured': isAlreadyMeasured,
-					style: {
-						position: 'absolute',
-						width: '100%',
-						transform: `translateY(${nailPoint}px)`,
-						contain: 'content',
+		const Child = component as React.ComponentType<TChildrenProps<I>>;
+		return (
+			<Child
+				{...{
+					...sharedProps,
+					data: itemData,
+					isAlreadyMeasured,
+					rootElProps: {
+						ref: this.itemElRef,
+						'data-index': itemIndex,
+						'data-measured': isAlreadyMeasured,
+						style: {
+							position: 'absolute',
+							width: '100%',
+							transform: `translateY(${nailPoint}px)`,
+							contain: 'content',
+						},
 					},
-				},
-			} as TChildrenProps<I>,
+				}}
+			/>
 		);
 	}
 }
