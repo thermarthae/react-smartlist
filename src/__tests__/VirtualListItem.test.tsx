@@ -5,7 +5,6 @@ import {
 import {
 	unstable_flushAll as flushAll,
 	unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
-	unstable_hasPendingWork as hasPendingWork,
 	unstable_LowPriority as LowPriority,
 	unstable_UserBlockingPriority as UserBlockingPriority,
 } from 'scheduler/unstable_mock';
@@ -52,6 +51,9 @@ describe('VirtualListItem', () => {
 		flushAll();
 	});
 
+	const observerConnect = vi.spyOn(ResizeObserver.prototype, 'observe');
+	const observerDisconnect = vi.spyOn(ResizeObserver.prototype, 'disconnect');
+
 	it('should render', () => {
 		const { container } = render(<VirtualListItem {...defaultProps} />);
 
@@ -75,15 +77,31 @@ describe('VirtualListItem', () => {
 
 	it('should not attach observers when measurment is disabled', () => {
 		render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
-		expect(hasPendingWork()).toBeFalsy();
+		triggerMeasurement();
+		expect(observerConnect).not.toBeCalled();
 	});
 
 	it('should attach observers when measurment is no longer disabled', () => {
 		const { rerender } = render(<VirtualListItem {...defaultProps} isMeasurmentDisabled />);
-		expect(hasPendingWork()).toBeFalsy();
+		triggerMeasurement();
+		expect(observerConnect).not.toBeCalled();
 
 		rerender(<VirtualListItem {...defaultProps} isMeasurmentDisabled={false} />);
-		expect(hasPendingWork()).toBeTruthy();
+		triggerMeasurement();
+		expect(observerConnect).toBeCalled();
+	});
+
+	it('should reuse the attached observer when rerendering', () => {
+		const { rerender } = render(<VirtualListItem {...defaultProps} />);
+
+		triggerMeasurement();
+		expect(observerConnect).toBeCalled();
+
+		observerConnect.mockClear();
+		rerender(<VirtualListItem {...defaultProps} isAlreadyMeasured />);
+
+		triggerMeasurement();
+		expect(observerConnect).not.toBeCalled();
 	});
 
 	it('should abort an observer attachment at premature unmount', () => {
@@ -92,6 +110,15 @@ describe('VirtualListItem', () => {
 		unmount();
 		triggerMeasurement();
 		expect(onMeasureFn).not.toBeCalled();
+	});
+
+	it('should disconnect from ResizeObserver when unmounting', () => {
+		const { unmount } = render(<VirtualListItem {...defaultProps} />);
+		triggerMeasurement();
+		expect(observerDisconnect).not.toBeCalled();
+
+		unmount();
+		expect(observerDisconnect).toBeCalled();
 	});
 
 	it('should not trigger the onMeasure event when height is equal to 0', () => {

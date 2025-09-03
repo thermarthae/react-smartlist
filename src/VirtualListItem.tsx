@@ -1,10 +1,11 @@
 import {
-	Component,
-	createRef,
 	ElementType,
+	memo,
+	useCallback,
+	useEffect,
+	useRef,
 } from 'react';
 import {
-	CallbackNode,
 	unstable_cancelCallback as cancelCallback,
 	unstable_LowPriority as LowPriority,
 	unstable_scheduleCallback as scheduleCallback,
@@ -13,11 +14,11 @@ import {
 import { shallowEqualObjects } from 'shallow-equal';
 
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<Item extends object = object, Ref extends HTMLElement = HTMLElement> = {
-	data: Item;
+export type TChildrenProps<Data extends object = object, El extends HTMLElement = HTMLElement> = {
+	data: Data;
 	isAlreadyMeasured: boolean;
 	rootElProps: {
-		ref: React.Ref<Ref>;
+		ref: React.Ref<El>;
 		'data-index': number;
 		'data-measured': boolean;
 		style: {
@@ -29,9 +30,9 @@ export type TChildrenProps<Item extends object = object, Ref extends HTMLElement
 	};
 };
 
-export type TProps<I extends object = object, C extends ElementType = ElementType> = {
+export type TProps<Data extends object = object, C extends ElementType = ElementType> = {
 	component: C;
-	itemData: I;
+	itemData: Data;
 	itemIndex: number;
 	nailPoint: number;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
@@ -44,101 +45,83 @@ export type TProps<I extends object = object, C extends ElementType = ElementTyp
 	};
 };
 
-class VirtualListItem<I extends object, C extends ElementType> extends Component<TProps<I, C>> {
-	private readonly itemElRef = createRef<HTMLElement>();
+function VirtualListItem<Data extends object, C extends ElementType>({
+	component,
+	itemData,
+	itemIndex,
+	nailPoint,
+	sharedProps,
+	isAlreadyMeasured,
+	isMeasurmentDisabled,
+	onMeasure,
+}: TProps<Data, C>) {
+	const ref = useRef<HTMLElement>(null);
+	const observer = useRef<ResizeObserver | null>(null);
 
-	private resizeObserver: ResizeObserver | null = null;
+	const onMeasureRef = useRef(onMeasure); // TODO: mayby useEffectEvent?
+	useEffect(() => { onMeasureRef.current = onMeasure; }, [onMeasure]);
 
-	private scheduledObserver: CallbackNode | null = null;
-
-	public componentDidMount() {
-		this.attachResizeObserver();
-	}
-
-	public shouldComponentUpdate(nextProps: TProps<I, C>) {
-		if (this.props !== nextProps) {
-			const { itemData: data, sharedProps: SP, onMeasure, ...prevRest } = this.props;
-			const { itemData: nextData, sharedProps: nextSP, onMeasure: nextOnMeasure, ...nextRest } = nextProps;
-
-			if (
-				onMeasure.key !== nextOnMeasure.key
-				|| !shallowEqualObjects(prevRest, nextRest)
-				|| !shallowEqualObjects(data, nextData)
-				|| !shallowEqualObjects(SP, nextSP)
-			) return true;
-		}
-
-		return false;
-	}
-
-	public componentDidUpdate(prevProps: TProps<I, C>) {
-		if (prevProps.isMeasurmentDisabled !== this.props.isMeasurmentDisabled) {
-			if (this.props.isMeasurmentDisabled) this.detachResizeObserver();
-			else this.attachResizeObserver();
-		}
-	}
-
-	public componentWillUnmount() {
-		this.detachResizeObserver();
-	}
-
-	private readonly attachResizeObserver = () => {
-		if (this.props.isMeasurmentDisabled) return;
-
-		// Use lower priority for already cached items
-		const priority = this.props.isAlreadyMeasured ? LowPriority : UserBlockingPriority;
-		this.scheduledObserver = scheduleCallback(priority, () => {
-			if (!this.itemElRef.current) return;
-			this.resizeObserver = new ResizeObserver(this.measureHeight);
-			this.resizeObserver.observe(this.itemElRef.current);
-		});
-	};
-
-	private readonly detachResizeObserver = () => {
-		if (this.scheduledObserver) cancelCallback(this.scheduledObserver);
-		this.resizeObserver?.disconnect();
-		this.resizeObserver = null;
-	};
-
-	private readonly measureHeight: ResizeObserverCallback = ([entry]) => {
-		const height = entry.borderBoxSize?.[0].blockSize ?? 0;
+	const handleResize = useCallback<ResizeObserverCallback>(([entry]) => {
+		const height = entry.borderBoxSize[0].blockSize;
 		if (height === 0) return;
 
-		this.props.onMeasure(height);
-	};
+		onMeasureRef.current(height);
+	}, []);
 
-	public render() {
-		const {
-			component,
-			itemData,
-			sharedProps,
-			isAlreadyMeasured,
-			nailPoint,
-			itemIndex,
-		} = this.props;
+	useEffect(() => {
+		if (!isMeasurmentDisabled) return () => {
+			observer.current?.disconnect();
+			observer.current = null;
+		};
+	}, [isMeasurmentDisabled, handleResize]);
 
-		const Child = component as React.ComponentType<TChildrenProps<I>>;
-		return (
-			<Child
-				{...{
-					...sharedProps,
-					data: itemData,
-					isAlreadyMeasured,
-					rootElProps: {
-						ref: this.itemElRef,
-						'data-index': itemIndex,
-						'data-measured': isAlreadyMeasured,
-						style: {
-							position: 'absolute',
-							width: '100%',
-							transform: `translateY(${nailPoint}px)`,
-							contain: 'content',
-						},
+	useEffect(() => {
+		if (isMeasurmentDisabled || observer.current) return;
+
+		// Use lower priority for already cached items
+		const priority = isAlreadyMeasured ? LowPriority : UserBlockingPriority;
+		const node = scheduleCallback(priority, () => {
+			if (!ref.current) return;
+			observer.current = new ResizeObserver(handleResize);
+			observer.current.observe(ref.current);
+		});
+
+		return () => cancelCallback(node);
+	}, [isMeasurmentDisabled, isAlreadyMeasured, handleResize]);
+
+	const Child = component as React.ComponentType<TChildrenProps<Data>>;
+	return (
+		<Child
+			{...{
+				...sharedProps,
+				data: itemData,
+				isAlreadyMeasured,
+				rootElProps: {
+					ref,
+					'data-index': itemIndex,
+					'data-measured': isAlreadyMeasured,
+					style: {
+						position: 'absolute',
+						width: '100%',
+						transform: `translateY(${nailPoint}px)`,
+						contain: 'content',
 					},
-				}}
-			/>
-		);
-	}
+				},
+			}}
+		/>
+	);
 }
 
-export default VirtualListItem;
+export default memo(VirtualListItem, (prev, next) => {
+	const { itemData: data, sharedProps: SP, onMeasure, ...prevRest } = prev;
+	const { itemData: nextData, sharedProps: nextSP, onMeasure: nextOnMeasure, ...nextRest } = next;
+
+	if (
+		onMeasure.key !== nextOnMeasure.key
+		|| !shallowEqualObjects(prevRest, nextRest)
+		|| !shallowEqualObjects(data, nextData)
+		|| !shallowEqualObjects(SP, nextSP)
+	) return false;
+
+	return true;
+});
