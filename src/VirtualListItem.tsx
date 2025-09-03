@@ -13,9 +13,11 @@ import {
 } from 'scheduler';
 import { shallowEqualObjects } from 'shallow-equal';
 
+import type { TData } from './VirtualList.tsx';
+
 export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<Data extends object = object, El extends HTMLElement = HTMLElement> = {
-	data: Data;
+export type TChildrenProps<D extends TData = TData, El extends HTMLElement = HTMLElement> = {
+	data: D;
 	isAlreadyMeasured: boolean;
 	rootElProps: {
 		ref: React.Ref<El>;
@@ -30,9 +32,9 @@ export type TChildrenProps<Data extends object = object, El extends HTMLElement 
 	};
 };
 
-export type TProps<Data extends object = object, C extends ElementType = ElementType> = {
+export type TProps<D extends TData = TData, C extends ElementType = ElementType> = {
 	component: C;
-	itemData: Data;
+	itemData: D;
 	itemIndex: number;
 	nailPoint: number;
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
@@ -45,7 +47,7 @@ export type TProps<Data extends object = object, C extends ElementType = Element
 	};
 };
 
-function VirtualListItem<Data extends object, C extends ElementType>({
+function VirtualListItem<D extends TData, C extends ElementType>({
 	component,
 	itemData,
 	itemIndex,
@@ -54,7 +56,7 @@ function VirtualListItem<Data extends object, C extends ElementType>({
 	isAlreadyMeasured,
 	isMeasurmentDisabled,
 	onMeasure,
-}: TProps<Data, C>) {
+}: TProps<D, C>) {
 	const ref = useRef<HTMLElement>(null);
 	const observer = useRef<ResizeObserver | null>(null);
 
@@ -89,7 +91,7 @@ function VirtualListItem<Data extends object, C extends ElementType>({
 		return () => cancelCallback(node);
 	}, [isMeasurmentDisabled, isAlreadyMeasured, handleResize]);
 
-	const Child = component as React.ComponentType<TChildrenProps<Data>>;
+	const Child = component as React.ComponentType<TChildrenProps<D>>;
 	return (
 		<Child
 			{...{

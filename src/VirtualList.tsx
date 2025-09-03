@@ -7,9 +7,9 @@ import { shallowEqualObjects } from 'shallow-equal';
 
 import VirtualListItem, { TSharedProps } from './VirtualListItem.tsx';
 
-export type TItemID = string | number;
-export type TItem = {
-	id: TItemID;
+export type TID = string | number;
+export type TData = {
+	id: TID;
 	[key: PropertyKey]: unknown;
 };
 
@@ -22,7 +22,7 @@ export type TWindowEdges = {
 	isInView: boolean;
 };
 
-export type TProps<I extends TItem = TItem, C extends ElementType = ElementType> = {
+export type TProps<D extends TData = TData, C extends ElementType = ElementType> = {
 	/**
 	 * Your component that is used to render a single list item.
 	 */
@@ -30,7 +30,7 @@ export type TProps<I extends TItem = TItem, C extends ElementType = ElementType>
 	/**
 	 * An array of actual data mapped to all children.
 	 */
-	items: readonly I[];
+	items: readonly D[];
 	/**
 	 * The estimated height of a single rendered item.
 	 *
@@ -68,7 +68,7 @@ export type TProps<I extends TItem = TItem, C extends ElementType = ElementType>
 	 *
 	 * Proceed with caution.
 	 */
-	initState?: Partial<TState<I>>;
+	initState?: Partial<TState<D>>;
 	/**
 	 * Disables the item measurements and sets `estimatedItemHeight` as an actual element height.
 	 *
@@ -87,10 +87,10 @@ export type TProps<I extends TItem = TItem, C extends ElementType = ElementType>
 	style?: React.CSSProperties | undefined;
 };
 
-type TState<I extends TItem = TItem> = {
+type TState<D extends TData = TData> = {
 	/** @ignore */
-	memoizedItemsArray: readonly I[];
-	heightCache: Map<TItemID, number>;
+	memoizedItemsArray: readonly D[];
+	heightCache: Map<TID, number>;
 	heightCacheVersion: number;
 	isInView: boolean;
 	nailPoints: readonly number[];
@@ -99,7 +99,7 @@ type TState<I extends TItem = TItem> = {
 	lastIndex: number;
 };
 
-class VirtualList<I extends TItem, C extends ElementType> extends Component<TProps<I, C>, TState<I>> {
+class VirtualList<D extends TData, C extends ElementType> extends Component<TProps<D, C>, TState<D>> {
 	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
 		if (props.items !== state.memoizedItemsArray) {
 			const { items, estimatedItemHeight } = props;
@@ -135,7 +135,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		return null;
 	}
 
-	public state: TState<I> = (() => {
+	public state: TState<D> = (() => {
 		const {
 			items,
 			disableMeasurment,
@@ -168,7 +168,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		this.handleScroll();
 	}
 
-	public shouldComponentUpdate(nextProps: TProps<I, C>, nextState: TState<I>) {
+	public shouldComponentUpdate(nextProps: TProps<D, C>, nextState: TState<D>) {
 		if (this.props !== nextProps) {
 			// `initState` is used only at the component init, so it shouldn't rerender the list
 			const { initState: a, sharedProps: SP, ...prevRest } = this.props;
@@ -180,7 +180,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		return !shallowEqualObjects(this.state, nextState);
 	}
 
-	public componentDidUpdate(prevProps: TProps<I, C>) {
+	public componentDidUpdate(prevProps: TProps<D, C>) {
 		if (prevProps !== this.props) {
 			this.handleScroll();
 		}
@@ -280,7 +280,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		return { isInView, firstIndex, lastIndex };
 	};
 
-	private readonly handleMeasure = (id: TItemID, entryIndex: number, entryHeight: number) => {
+	private readonly handleMeasure = (id: TID, entryIndex: number, entryHeight: number) => {
 		this.setState((state, { items }) => {
 			if (state.heightCache.get(id) === entryHeight) return null;
 
@@ -325,7 +325,7 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 		});
 	};
 
-	private readonly getItemHeight = (item: I) => {
+	private readonly getItemHeight = (item: D) => {
 		return this.state.heightCache.get(item.id) ?? this.props.estimatedItemHeight;
 	};
 
