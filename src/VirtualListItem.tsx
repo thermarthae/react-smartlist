@@ -113,14 +113,13 @@ function VirtualListItem<Data extends object, C extends ElementType>({
 }
 
 export default memo(VirtualListItem, (prev, next) => {
-	const { itemData: data, sharedProps: SP, onMeasure, ...prevRest } = prev;
-	const { itemData: nextData, sharedProps: nextSP, onMeasure: nextOnMeasure, ...nextRest } = next;
+	const { itemData: data, onMeasure, ...prevRest } = prev;
+	const { itemData: nextData, onMeasure: nextOnMeasure, ...nextRest } = next;
 
 	if (
 		onMeasure.key !== nextOnMeasure.key
 		|| !shallowEqualObjects(prevRest, nextRest)
 		|| !shallowEqualObjects(data, nextData)
-		|| !shallowEqualObjects(SP, nextSP)
 	) return false;
 
 	return true;

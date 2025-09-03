@@ -305,6 +305,7 @@ describe('VirtualList', () => {
 		testProps({ overscanPadding: 90 }, true);
 		testProps({ className: 'test2' }, true);
 		testProps({ sharedProps: { title: '1' } }, true);
+		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
 		testProps({ initState: { lastIndex: 3 } }, false);
 	});
 

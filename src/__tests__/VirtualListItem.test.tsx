@@ -167,7 +167,6 @@ describe('VirtualListItem', () => {
 		testProps({ isAlreadyMeasured: !prevProps.isAlreadyMeasured }, true);
 		testProps({ onMeasure: makeMeasureFn(prevProps.onMeasure.key) }, false);
 		testProps({ onMeasure: makeMeasureFn('1') }, true);
-		testProps({ sharedProps: { ...prevProps.sharedProps } }, false);
-		testProps({ sharedProps: { title: '1' } }, true);
+		testProps({ sharedProps: { ...prevProps.sharedProps } }, true);
 	});
 });

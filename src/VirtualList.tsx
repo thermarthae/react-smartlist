@@ -171,10 +171,10 @@ class VirtualList<I extends TItem, C extends ElementType> extends Component<TPro
 	public shouldComponentUpdate(nextProps: TProps<I, C>, nextState: TState<I>) {
 		if (this.props !== nextProps) {
 			// `initState` is used only at the component init, so it shouldn't rerender the list
-			const { initState: a, ...prevRest } = this.props;
-			const { initState: b, ...nextRest } = nextProps;
+			const { initState: a, sharedProps: SP, ...prevRest } = this.props;
+			const { initState: b, sharedProps: nextSP, ...nextRest } = nextProps;
 
-			if (!shallowEqualObjects(prevRest, nextRest)) return true;
+			if (!shallowEqualObjects(SP, nextSP) || !shallowEqualObjects(prevRest, nextRest)) return true;
 		}
 
 		return !shallowEqualObjects(this.state, nextState);
