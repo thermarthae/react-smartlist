@@ -330,37 +330,23 @@ class VirtualList<D extends TData, C extends ElementType> extends Component<TPro
 	};
 
 	public render() {
-		const {
-			component,
-			items,
-			className,
-			sharedProps,
-			disableMeasurment,
-			style,
-		} = this.props;
-		const {
-			heightCache,
-			isInView,
-			firstIndex,
-			lastIndex,
-			nailPoints,
-			listHeight,
-		} = this.state;
+		const p = this.props;
+		const s = this.state;
 
 		return (
 			<div
 				ref={this.listElRef}
-				className={className}
+				className={p.className}
 				style={{
 					position: 'relative',
 					contain: 'strict',
 					width: '100%',
-					...style,
-					height: listHeight,
+					...p.style,
+					height: s.listHeight,
 				}}
 			>
-				{isInView && items.slice(firstIndex, lastIndex + 1).map((itemData, i) => {
-					const index = firstIndex + i;
+				{s.isInView && p.items.slice(s.firstIndex, s.lastIndex + 1).map((itemData, i) => {
+					const index = s.firstIndex + i;
 					const onMeasure = (height: number) => this.handleMeasure(itemData.id, index, height);
 					onMeasure.key = `${itemData.id} ${index}`;
 
@@ -368,13 +354,13 @@ class VirtualList<D extends TData, C extends ElementType> extends Component<TPro
 						<VirtualListItem
 							key={itemData.id}
 							itemIndex={index}
-							component={component}
+							component={p.component}
 							itemData={itemData}
-							isAlreadyMeasured={heightCache.has(itemData.id)}
-							nailPoint={nailPoints[index]}
-							sharedProps={sharedProps}
+							isAlreadyMeasured={s.heightCache.has(itemData.id)}
+							nailPoint={s.nailPoints[index]}
+							sharedProps={p.sharedProps}
 							onMeasure={onMeasure}
-							isMeasurmentDisabled={disableMeasurment}
+							isMeasurmentDisabled={p.disableMeasurment}
 						/>
 					);
 				})}
