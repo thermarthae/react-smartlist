@@ -40,11 +40,7 @@ export type TProps<D extends TData = TData, C extends ElementType = ElementType>
 	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
 	isAlreadyMeasured: boolean;
 	isMeasurmentDisabled?: boolean;
-	onMeasure: {
-		/**  React memo helper to check whether `onMeasure` actually differs */
-		key?: string;
-		(height: number): void;
-	};
+	onMeasure: (index: number, height: number) => void;
 };
 
 function VirtualListItem<D extends TData, C extends ElementType>({
@@ -60,15 +56,12 @@ function VirtualListItem<D extends TData, C extends ElementType>({
 	const ref = useRef<HTMLElement>(null);
 	const observer = useRef<ResizeObserver | null>(null);
 
-	const onMeasureRef = useRef(onMeasure); // TODO: mayby useEffectEvent?
-	useEffect(() => { onMeasureRef.current = onMeasure; }, [onMeasure]);
-
 	const handleResize = useCallback<ResizeObserverCallback>(([entry]) => {
 		const height = entry.borderBoxSize[0].blockSize;
 		if (height === 0) return;
 
-		onMeasureRef.current(height);
-	}, []);
+		onMeasure(itemIndex, height);
+	}, [onMeasure, itemIndex]);
 
 	useEffect(() => {
 		if (!isMeasurmentDisabled) return () => {
@@ -115,14 +108,9 @@ function VirtualListItem<D extends TData, C extends ElementType>({
 }
 
 export default memo(VirtualListItem, (prev, next) => {
-	const { itemData: data, onMeasure, ...prevRest } = prev;
-	const { itemData: nextData, onMeasure: nextOnMeasure, ...nextRest } = next;
+	const { itemData: data, ...rest } = prev;
+	const { itemData: nextData, ...nextRest } = next;
 
-	if (
-		onMeasure.key !== nextOnMeasure.key
-		|| !shallowEqualObjects(prevRest, nextRest)
-		|| !shallowEqualObjects(data, nextData)
-	) return false;
-
+	if (!shallowEqualObjects(rest, nextRest) || !shallowEqualObjects(data, nextData)) return false;
 	return true;
 });

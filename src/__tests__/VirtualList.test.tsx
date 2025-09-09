@@ -12,7 +12,7 @@ import {
 } from 'vitest';
 
 import VirtualList, { TProps as TVirtualListProps } from '../VirtualList.tsx';
-import type { TChildrenProps } from '../VirtualListItem.tsx';
+import VirtualListItem, { TChildrenProps } from '../VirtualListItem.tsx';
 
 type TSharedProps = {
 	title?: string;
@@ -288,15 +288,16 @@ describe('VirtualList', () => {
 			sharedProps: { title: '0' },
 			initState: {},
 		};
-		const sCU = vi.spyOn(VirtualList.prototype, 'shouldComponentUpdate');
+		const listRender = vi.spyOn(VirtualList, 'type');
 		const { rerender } = render(<VirtualList {...prevProps} />);
 
 		const testProps = (newProps: Partial<TListProps>, shouldRerender: boolean) => {
-			sCU.mockClear();
+			listRender.mockClear();
 			prevProps = { ...prevProps, ...newProps };
 			rerender(<VirtualList {...prevProps} />);
 
-			expect(sCU).toHaveNthReturnedWith(1, shouldRerender);
+			if (shouldRerender) expect(listRender).toBeCalled();
+			else expect(listRender).not.toBeCalled();
 		};
 
 		testProps({}, false);
@@ -310,21 +311,24 @@ describe('VirtualList', () => {
 	});
 
 	it('should handle the measurement when item is no longer visible', () => {
-		const spiedFn = vi.spyOn(VirtualList.prototype, 'render');
-		const { container, getAllByText } = render(<VirtualList {...defaultProps} />);
+		const ListItem = vi.spyOn(VirtualListItem, 'type');
+		const { container, getAllByText } = render(<VirtualList {...defaultProps} estimatedItemHeight={1} />);
 		const list = container.firstElementChild as HTMLElement;
-		const firstlyRenderedItems = getAllByText(/ListItem/);
-		const firstListHeight = parseInt(list.style.height, 10);
 
-		// @ts-expect-error Hack to trigger `handleMeasure` on an umnounted item
-		const measureFn = (spiedFn.mock.instances[0] as InstanceType<typeof VirtualList>).handleMeasure;
+		expect(ListItem).toBeCalled();
+		const lastOfListItemProps = ListItem.mock.lastCall![0];
 
-		const item = defaultProps.items[30];
-		const height = 9999;
-		act(() => measureFn(item.id, item.id, height));
+		triggerMeasurement();
 
-		expect(getAllByText(/ListItem/)).toEqual(firstlyRenderedItems);
-		expect(parseInt(list.style.height, 10)).toEqual(firstListHeight + height - estimatedItemHeight);
+		const firstlyRendered = getAllByText('ListItem').map(i => i.dataset.id);
+		expect(firstlyRendered).not.toContain(lastOfListItemProps.itemData.id);
+
+		const listHeightBefore = Number(list.style.height);
+		const itemHeight = 10000;
+		act(() => lastOfListItemProps.onMeasure(lastOfListItemProps.itemIndex, itemHeight));
+
+		expect(getAllByText('ListItem').map(i => i.dataset.id)).toEqual(firstlyRendered);
+		expect(Number(list.style.height)).toBe(listHeightBefore + (itemHeight - estimatedItemHeight));
 	});
 
 	it('should not rerender when `items` array has changed without changing its actual content', () => {

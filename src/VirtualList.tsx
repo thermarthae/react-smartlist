@@ -1,7 +1,10 @@
 import {
-	Component,
-	createRef,
 	ElementType,
+	memo,
+	useCallback,
+	useEffect,
+	useReducer,
+	useRef,
 } from 'react';
 import { shallowEqualObjects } from 'shallow-equal';
 
@@ -30,7 +33,7 @@ export type TProps<D extends TData = TData, C extends ElementType = ElementType>
 	/**
 	 * An array of actual data mapped to all children.
 	 */
-	items: readonly D[];
+	items: D[];
 	/**
 	 * The estimated height of a single rendered item.
 	 *
@@ -68,7 +71,7 @@ export type TProps<D extends TData = TData, C extends ElementType = ElementType>
 	 *
 	 * Proceed with caution.
 	 */
-	initState?: Partial<TState<D>>;
+	initState?: Partial<TState>;
 	/**
 	 * Disables the item measurements and sets `estimatedItemHeight` as an actual element height.
 	 *
@@ -87,286 +90,288 @@ export type TProps<D extends TData = TData, C extends ElementType = ElementType>
 	style?: React.CSSProperties | undefined;
 };
 
-type TState<D extends TData = TData> = {
-	/** @ignore */
-	memoizedItemsArray: readonly D[];
-	heightCache: Map<TID, number>;
-	heightCacheVersion: number;
+type TState = {
+	items: TData[];
+	estimatedItemHeight: number;
+	overscanPadding: number;
+	rootElRef: React.RefObject<HTMLDivElement | null>;
+	heightCache: Record<TID, number>;
 	isInView: boolean;
-	nailPoints: readonly number[];
+	nailPoints: number[];
 	listHeight: number;
 	firstIndex: number;
 	lastIndex: number;
 };
 
-class VirtualList<D extends TData, C extends ElementType> extends Component<TProps<D, C>, TState<D>> {
-	public static getDerivedStateFromProps(props: TProps, state: TState): Partial<TState> | null {
-		if (props.items !== state.memoizedItemsArray) {
-			const { items, estimatedItemHeight } = props;
-			const { heightCache } = state;
-			const arrLastIndex = Math.max(0, items.length - 1); // HACK: `items` may be empty!
-			const nailPoints = [0];
-			const getHeight = (i: number) => heightCache.get(items[i].id) ?? estimatedItemHeight;
-
-			for (let i = 0; i < arrLastIndex; i += 1) {
-				const nailPoint = nailPoints[i];
-				const height = getHeight(i);
-
-				nailPoints.push(nailPoint + height);
-			}
-
-			const nailPoint = nailPoints[arrLastIndex];
-			const height = !items[0] ? 0 : getHeight(arrLastIndex);
-			const listHeight = nailPoint + height;
-
-			const clampIntoArrRange = (value: number) => Math.min(Math.max(0, value), items.length - 1);
-
-			return {
-				memoizedItemsArray: items,
-				nailPoints,
-				listHeight,
-				isInView: !items[0] ? false : state.isInView, // Is it necessary? Just in case...
-				// Fix indexes when out of bounds:
-				firstIndex: clampIntoArrRange(state.firstIndex),
-				lastIndex: clampIntoArrRange(state.lastIndex),
-			};
-		}
-
-		return null;
+type TAction = (
+	| { type: 'scroll' }
+	| { type: 'init' }
+	| { type: 'measure'; index: number; height: number }
+	| {
+		type: 'props-update';
+		items: TData[];
+		estimatedItemHeight: number;
+		overscanPadding: number;
 	}
+);
 
-	public state: TState<D> = (() => {
-		const {
-			items,
-			disableMeasurment,
-			estimatedItemHeight,
-			initState,
-		} = this.props;
+const getWindowEdges = (listHeight: number, rootElOffsetTop = 0, overscanPadding: number): TWindowEdges => {
+	const rawTop = document.documentElement.scrollTop - rootElOffsetTop;
+	const rawBottom = rawTop + window.innerHeight;
 
-		return {
-			memoizedItemsArray: items,
-			heightCache: new Map(
-				!disableMeasurment
-					? undefined
-					: items.map(item => [item.id, estimatedItemHeight]),
-			),
-			heightCacheVersion: 0,
-			isInView: true,
-			nailPoints: items.map((_data, index) => index * estimatedItemHeight),
-			listHeight: items.length * estimatedItemHeight,
-			firstIndex: 0,
-			lastIndex: 0,
-			...initState,
-		};
-	})();
+	const bottom = Math.max(0, Math.min(rawBottom + overscanPadding, listHeight));
+	const top = Math.max(0, Math.min(rawTop - overscanPadding, bottom));
+	const isInView = bottom !== top;
 
-	private readonly listElRef = createRef<HTMLDivElement>();
-
-	public componentDidMount() {
-		document.addEventListener('scroll', this.handleScroll);
-		window.addEventListener('resize', this.handleScroll);
-		this.handleScroll();
-	}
-
-	public shouldComponentUpdate(nextProps: TProps<D, C>, nextState: TState<D>) {
-		if (this.props !== nextProps) {
-			// `initState` is used only at the component init, so it shouldn't rerender the list
-			const { initState: a, sharedProps: SP, ...prevRest } = this.props;
-			const { initState: b, sharedProps: nextSP, ...nextRest } = nextProps;
-
-			if (!shallowEqualObjects(SP, nextSP) || !shallowEqualObjects(prevRest, nextRest)) return true;
-		}
-
-		return !shallowEqualObjects(this.state, nextState);
-	}
-
-	public componentDidUpdate(prevProps: TProps<D, C>) {
-		if (prevProps !== this.props) {
-			this.handleScroll();
-		}
-	}
-
-	public componentWillUnmount() {
-		document.removeEventListener('scroll', this.handleScroll);
-		window.removeEventListener('resize', this.handleScroll);
-	}
-
-	private readonly getPivot = (s = this.state) => {
-		const pivot = s.firstIndex;
-
-		for (let i = s.firstIndex + 1; i <= s.lastIndex; i += 1) {
-			const id = this.props.items[i].id;
-			if (s.heightCache.has(id)) return i;
-		}
-
-		return pivot;
+	return {
+		isInView,
+		top,
+		bottom,
+		rawTop,
+		rawBottom,
+		listHeight,
 	};
+};
 
-	private readonly handleScroll = () => {
-		if (!this.props.items[0]) return;
+const getVisibleIndexes = (
+	pivot: number,
+	edges: TWindowEdges,
+	nailPoints: number[],
+	items: TData[],
+	getHeight: (id: TID) => number,
+) => {
+	const { isInView } = edges;
+	if (!isInView) return { isInView };
 
-		const edges = this.getWindowEdges();
-		this.props.onScroll?.(edges);
+	let firstIndex = NaN;
+	let lastIndex = NaN;
 
-		const prev = this.state;
-		const next = {
-			firstIndex: prev.firstIndex,
-			lastIndex: prev.lastIndex,
-			...this.getVisibleIndexes(prev.nailPoints, edges),
-		};
+	const isIndexVisible = (i: number) => {
+		const nP = nailPoints[i];
+		const height = getHeight(items[i].id);
+		const isStillNotFound = Number.isNaN(firstIndex);
+
+		const isVisible = edges.top <= nP + height && nP <= edges.bottom;
+		if (!isVisible) return isStillNotFound; // if not visible but found index in a scan before - break the loop
+
+		if (isStillNotFound || i < firstIndex) firstIndex = i;
+		if (isStillNotFound || i > lastIndex) lastIndex = i;
+
+		return true; // `i` visible, check next one
+	};
+	for (let i = pivot; i >= 0 && isIndexVisible(i); i--) { /* empty */ }
+	for (let i = pivot + 1; i < items.length && isIndexVisible(i); i++) { /* empty */ }
+
+	return { isInView, firstIndex, lastIndex };
+};
+
+const rebuildNailPoints = (
+	start: number,
+	prevNailPoints: number[],
+	items: TData[],
+	getHeight: (id: TID) => number,
+) => {
+	const nailPoints = prevNailPoints.slice(0, start + 1);
+	for (let i = start; i < items.length - 1; i++) {
+		const nailPoint = nailPoints[i];
+		const height = getHeight(items[i].id);
+
+		nailPoints.push(nailPoint + height);
+	}
+
+	const last = Math.max(0, items.length - 1); // `items` may be empty
+	const listHeight = nailPoints[last] + getHeight(items[last].id);
+
+	return { nailPoints, listHeight };
+};
+
+const getPivotIndex = (firstIndex: number, lastIndex: number, items: TData[], heightCache: Record<TID, number>) => {
+	let index = firstIndex;
+	for (let i = index; i <= lastIndex; i++) {
+		if (heightCache[items[i].id]) {
+			index = i;
+			break;
+		}
+	}
+
+	return index;
+};
+
+const clampIntoArrRange = (arr: unknown[], value: number) => Math.max(0, Math.min(value, arr.length - 1));
+
+let prevAction: TAction | null = null;
+const isReactStrictModeDuplicate = (action: TAction) => {
+	if (Object.is(action, prevAction)) return true;
+	prevAction = action;
+
+	return false;
+};
+
+const reducer = (state: TState, action: TAction): TState => {
+	const rootElOffsetTop = state.rootElRef.current?.offsetTop;
+	const getHeight = (id: TID) => state.heightCache[id] ?? state.estimatedItemHeight;
+
+	if (action.type === 'scroll' || action.type === 'init') {
+		if (!state.items[0]) return state;
+
+		const edges = getWindowEdges(state.listHeight, rootElOffsetTop, state.overscanPadding);
+		const indexes = getVisibleIndexes(state.firstIndex, edges, state.nailPoints, state.items, getHeight);
 
 		// Bailout if a state doesn't require an update to prevent empty render commit.
 		// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-		if (
-			next.firstIndex !== prev.firstIndex
-			|| next.lastIndex !== prev.lastIndex
-			|| next.isInView !== prev.isInView
-		) this.setState(next);
-	};
+		const nextState = { ...state, ...indexes };
+		if (shallowEqualObjects(state, nextState)) return state;
+		return nextState;
+	}
 
-	private readonly getWindowEdges = (nextListHeight?: number): TWindowEdges => {
-		const offsetTop = this.listElRef?.current?.offsetTop ?? 0;
-		const { overscanPadding = 20 } = this.props;
+	if (action.type === 'measure') {
+		const { index: entryIndex, height: entryHeight } = action;
+		const entryID = state.items[entryIndex].id;
 
-		const rawTop = document.documentElement.scrollTop - offsetTop;
-		const rawBottom = rawTop + window.innerHeight;
-		const listHeight = nextListHeight ?? this.state.listHeight;
+		if (state.heightCache[entryID] === entryHeight) return state;
+		const heightCache = { ...state.heightCache, [entryID]: entryHeight };
+		const getFreshHeight = (id: TID) => heightCache[id] ?? state.estimatedItemHeight;
 
-		const bottom = Math.max(0, Math.min(listHeight, rawBottom + overscanPadding));
-		const top = Math.max(0, Math.min(bottom, rawTop - overscanPadding));
+		const { nailPoints, listHeight } = rebuildNailPoints(entryIndex, state.nailPoints, state.items, getFreshHeight);
+
+		const pivotIndex = getPivotIndex(state.firstIndex, state.lastIndex, state.items, state.heightCache);
+		const isChangingAbovePivot = (entryIndex < pivotIndex || state.lastIndex <= pivotIndex);
+		const isListShrinking = listHeight < state.listHeight;
+
+		if (!isReactStrictModeDuplicate(action) && (isChangingAbovePivot || isListShrinking)) {
+			const pivotHeightDiff = getHeight(state.items[pivotIndex].id) - getFreshHeight(state.items[pivotIndex].id);
+			const pivotNailPointDiff = state.nailPoints[pivotIndex] - nailPoints[pivotIndex];
+
+			// Offset the difference to prevent the content from jumping around.
+			document.documentElement.scrollTop -= pivotNailPointDiff + pivotHeightDiff;
+		}
+
+		const edges = getWindowEdges(listHeight, rootElOffsetTop, state.overscanPadding);
+		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, state.items, getFreshHeight);
+
+		return { ...state, heightCache, nailPoints, listHeight, ...indexes };
+	}
+
+	if (action.type === 'props-update') {
+		const { items, estimatedItemHeight, overscanPadding } = action;
+		const getFreshHeight = (id: TID) => state.heightCache[id] ?? estimatedItemHeight;
+
+		const firstIndex = clampIntoArrRange(items, state.firstIndex);
+		const lastIndex = clampIntoArrRange(items, state.lastIndex);
+		const pivotIndex = getPivotIndex(firstIndex, lastIndex, items, state.heightCache);
+		const { nailPoints, listHeight } = rebuildNailPoints(0, state.nailPoints, items, getFreshHeight);
+		const edges = getWindowEdges(listHeight, rootElOffsetTop, overscanPadding);
+		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, items, getFreshHeight);
 
 		return {
-			isInView: bottom !== top,
-			top,
-			bottom,
-			rawTop,
-			rawBottom,
+			...state,
+			items,
+			estimatedItemHeight,
+			overscanPadding,
+			nailPoints,
 			listHeight,
+			firstIndex,
+			lastIndex,
+			...indexes,
 		};
-	};
-
-	private readonly getVisibleIndexes = (nailPoints: readonly number[], edges = this.getWindowEdges()) => {
-		const { isInView } = edges;
-		if (!isInView) return { isInView };
-
-		const { items } = this.props;
-
-		let firstIndex = NaN;
-		let lastIndex = NaN;
-
-		// returns `true` when a for loop should break
-		const scanIndex = (i: number) => {
-			const nP = nailPoints[i];
-			const height = this.getItemHeight(items[i]);
-			const isStillNotFound = Number.isNaN(firstIndex);
-
-			const isVisible = (edges.top <= (nP + height)) && (nP <= edges.bottom);
-			if (!isVisible) return !isStillNotFound; // if not visible but found index in a scan before - break the loop
-
-			if (isStillNotFound || i < firstIndex) firstIndex = i;
-			if (isStillNotFound || i > lastIndex) lastIndex = i;
-
-			return false; // `i` visible, check next one
-		};
-
-		const pivot = this.getPivot();
-		for (let i = pivot; i >= 0; i -= 1) {
-			if (scanIndex(i)) break;
-		}
-		for (let i = pivot + 1; i < items.length; i += 1) {
-			if (scanIndex(i)) break;
-		}
-
-		return { isInView, firstIndex, lastIndex };
-	};
-
-	private readonly handleMeasure = (id: TID, entryIndex: number, entryHeight: number) => {
-		this.setState((state, { items }) => {
-			if (state.heightCache.get(id) === entryHeight) return null;
-
-			const pivotIndex = this.getPivot();
-			const pivot = items[pivotIndex];
-			const prevPivotHeight = this.getItemHeight(pivot);
-
-			// To update the height of an item, we are *mutating* the `heightCache` map.
-			// Unluckily, React will not detect our direct change.
-			// To let him know about the change, we are just bumping a dummy `heightCacheVersion` state.
-			state.heightCache.set(id, entryHeight);
-			const heightCacheVersion = state.heightCacheVersion + 1;
-
-			const nailPoints = state.nailPoints.slice(0, entryIndex + 1);
-
-			for (let i = entryIndex; i < items.length - 1; i += 1) {
-				const nailPoint = nailPoints[i];
-				const height = this.getItemHeight(items[i]);
-
-				nailPoints.push(nailPoint + height);
-			}
-
-			const listHeight = nailPoints.at(-1)! + this.getItemHeight(items.at(-1)!);
-			const changeAbovePivot = (entryIndex < pivotIndex || state.lastIndex <= pivotIndex);
-			const listShrinks = listHeight < state.listHeight;
-
-			if (changeAbovePivot || listShrinks) {
-				const prevPivotEdge = state.nailPoints[pivotIndex] + prevPivotHeight;
-				const nextPivotEdge = nailPoints[pivotIndex] + this.getItemHeight(pivot);
-
-				// Offset the difference to prevent the content from jumping around.
-				document.documentElement.scrollTop -= prevPivotEdge - nextPivotEdge;
-			}
-
-			return {
-				...state,
-				heightCacheVersion,
-				listHeight,
-				nailPoints,
-				...this.getVisibleIndexes(nailPoints, this.getWindowEdges(listHeight)),
-			};
-		});
-	};
-
-	private readonly getItemHeight = (item: D) => {
-		return this.state.heightCache.get(item.id) ?? this.props.estimatedItemHeight;
-	};
-
-	public render() {
-		const p = this.props;
-		const s = this.state;
-
-		return (
-			<div
-				ref={this.listElRef}
-				className={p.className}
-				style={{
-					position: 'relative',
-					contain: 'strict',
-					width: '100%',
-					...p.style,
-					height: s.listHeight,
-				}}
-			>
-				{s.isInView && p.items.slice(s.firstIndex, s.lastIndex + 1).map((itemData, i) => {
-					const index = s.firstIndex + i;
-					const onMeasure = (height: number) => this.handleMeasure(itemData.id, index, height);
-					onMeasure.key = `${itemData.id} ${index}`;
-
-					return (
-						<VirtualListItem
-							key={itemData.id}
-							itemIndex={index}
-							component={p.component}
-							itemData={itemData}
-							isAlreadyMeasured={s.heightCache.has(itemData.id)}
-							nailPoint={s.nailPoints[index]}
-							sharedProps={p.sharedProps}
-							onMeasure={onMeasure}
-							isMeasurmentDisabled={p.disableMeasurment}
-						/>
-					);
-				})}
-			</div>
-		);
 	}
-}
 
-export default VirtualList;
+	return state;
+};
+
+function VirtualList<D extends TData, C extends ElementType>({
+	component,
+	items,
+	estimatedItemHeight,
+	overscanPadding = 20,
+	className,
+	sharedProps,
+	initState,
+	disableMeasurment,
+	onScroll,
+	style,
+}: TProps<D, C>) {
+	const rootElRef = useRef<HTMLDivElement>(null);
+	const [state, dispatch] = useReducer(reducer, 0, () => ({
+		rootElRef,
+		items,
+		estimatedItemHeight,
+		overscanPadding,
+		heightCache: {},
+		isInView: true,
+		nailPoints: items.map((_data, i) => i * estimatedItemHeight),
+		listHeight: items.length * estimatedItemHeight,
+		firstIndex: 0,
+		lastIndex: 0,
+		...initState,
+	}));
+	const onMeasure = useCallback((index: number, height: number) => dispatch({ type: 'measure', index, height }), []);
+
+	useEffect(() => dispatch({ type: 'init' }), []);
+
+	useEffect(() => {
+		const handleScroll = () => {
+			onScroll?.(getWindowEdges(state.listHeight, rootElRef.current?.offsetTop, overscanPadding));
+
+			dispatch({ type: 'scroll' });
+		};
+
+		document.addEventListener('scroll', handleScroll);
+		window.addEventListener('resize', handleScroll);
+
+		return () => {
+			document.removeEventListener('scroll', handleScroll);
+			window.removeEventListener('resize', handleScroll);
+		};
+	}, [state.listHeight, overscanPadding, onScroll]);
+
+	if (
+		items !== state.items
+		|| estimatedItemHeight !== state.estimatedItemHeight
+		|| overscanPadding !== state.overscanPadding
+	) {
+		dispatch({ type: 'props-update', items, estimatedItemHeight, overscanPadding });
+		return null;
+	}
+
+	return (
+		<div
+			ref={rootElRef}
+			className={className}
+			style={{
+				position: 'relative',
+				contain: 'strict',
+				width: '100%',
+				...style,
+				height: state.listHeight,
+			}}
+		>
+			{state.isInView && items.slice(state.firstIndex, state.lastIndex + 1).map((itemData, i) => {
+				const index = state.firstIndex + i;
+
+				return (
+					<VirtualListItem
+						key={itemData.id}
+						itemIndex={index}
+						component={component}
+						itemData={itemData}
+						isAlreadyMeasured={!!state.heightCache[itemData.id]}
+						nailPoint={state.nailPoints[index]}
+						sharedProps={sharedProps}
+						onMeasure={onMeasure}
+						isMeasurmentDisabled={disableMeasurment}
+					/>
+				);
+			})}
+		</div>
+	);
+};
+
+export default memo(VirtualList, (prev, next) => {
+	// `initState` is used only at the component init, so it shouldn't rerender the list
+	const { initState: a, sharedProps: SP, ...prevRest } = prev;
+	const { initState: b, sharedProps: nextSP, ...nextRest } = next;
+
+	if (!shallowEqualObjects(SP, nextSP) || !shallowEqualObjects(prevRest, nextRest)) return false;
+	return true;
+});

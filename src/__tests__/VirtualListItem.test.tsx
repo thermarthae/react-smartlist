@@ -27,7 +27,7 @@ type TListItemProps = TVirtualListItemProps<TItemData, React.FC<TItemComponentPr
 vi.useFakeTimers();
 
 describe('VirtualListItem', () => {
-	const onMeasureFn = vi.fn();
+	const onMeasureFn = vi.fn<TListItemProps['onMeasure']>();
 	const ItemComponent = vi.fn(({ rootElProps, title, data }: TItemComponentProps) => (
 		<div
 			{...rootElProps}
@@ -138,15 +138,12 @@ describe('VirtualListItem', () => {
 		triggerMeasurement();
 
 		expect(onMeasureFn).toHaveReturnedTimes(1);
-		expect(onMeasureFn).toHaveBeenCalledWith(height);
+		expect(onMeasureFn).toHaveBeenCalledWith(0, height);
 	});
 
 	it('should not rerender when it is unnecessary', () => {
-		const makeMeasureFn = (key = '0') => Object.assign(() => 0, { key });
-
 		let prevProps: TListItemProps = {
 			...defaultProps,
-			onMeasure: makeMeasureFn(),
 			sharedProps: { title: '0' },
 		};
 		const { rerender } = render(<VirtualListItem {...prevProps} />);
@@ -165,8 +162,7 @@ describe('VirtualListItem', () => {
 		testProps({ itemIndex: 43 }, true);
 		testProps({ nailPoint: 91 }, true);
 		testProps({ isAlreadyMeasured: !prevProps.isAlreadyMeasured }, true);
-		testProps({ onMeasure: makeMeasureFn(prevProps.onMeasure.key) }, false);
-		testProps({ onMeasure: makeMeasureFn('1') }, true);
+		testProps({ onMeasure: () => {} }, true);
 		testProps({ sharedProps: { ...prevProps.sharedProps } }, true);
 	});
 });
