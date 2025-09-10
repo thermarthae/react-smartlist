@@ -4,22 +4,17 @@
 	"license": "MIT",
 	"author": "thermarthae <thermarthae@protonmail.com>",
 	"type": "module",
-	"main": "./dist/index.cjs",
-	"types": "./dist/index.d.ts",
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
 			"types": "./dist/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.cjs"
+			"default": "./dist/index.js"
 		},
 		"./*": {
 			"types": "./dist/*.d.ts",
-			"import": "./dist/*.js",
-			"default": "./dist/*.cjs"
+			"default": "./dist/*.js"
 		}
 	},
-	"sideEffects": false,
 	"packageManager": "yarn@4.9.3+sha512.8295ee814f6b253e16f516416481b481a215ed03ef1ae38524d108084872560a9ed75aeb23b91ab64222062ac4149a594150ae538c2a9536fdbcefd4e49b11cc",
 	"repository": {
 		"type": "git",

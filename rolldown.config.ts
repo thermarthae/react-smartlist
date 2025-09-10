@@ -3,7 +3,7 @@ import { dts } from 'rolldown-plugin-dts';
 
 import pkg from './package.json' with { type: 'json' };
 
-const commonConfig = defineConfig({
+export default defineConfig({
 	input: './src/index.ts',
 	external: [
 		'react/jsx-runtime',
@@ -17,18 +17,3 @@ const commonConfig = defineConfig({
 	},
 	plugins: [dts({ sourcemap: true })],
 });
-
-export default defineConfig([
-	// *.js && *.d.ts
-	commonConfig,
-	// *.cjs
-	{
-		...commonConfig,
-		output: {
-			...commonConfig.output,
-			format: 'cjs',
-			entryFileNames: '[name].cjs',
-		},
-		plugins: [],
-	},
-]);
