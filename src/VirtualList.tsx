@@ -185,9 +185,9 @@ const rebuildNailPoints = (
 	return { nailPoints, listHeight };
 };
 
-const getPivotIndex = (firstIndex: number, lastIndex: number, items: TData[], heightCache: Record<TID, number>) => {
-	let index = firstIndex;
-	for (let i = index; i <= lastIndex; i++) {
+const getPivotIndex = (first: number, last: number, items: TData[], heightCache: Record<TID, number>, offset = 0) => {
+	let index = first;
+	for (let i = first + offset; i <= last; i++) {
 		if (heightCache[items[i].id]) {
 			index = i;
 			break;
@@ -234,7 +234,8 @@ const reducer = (state: TState, action: TAction): TState => {
 
 		const { nailPoints, listHeight } = rebuildNailPoints(entryIndex, state.nailPoints, state.items, getFreshHeight);
 
-		const pivotIndex = getPivotIndex(state.firstIndex, state.lastIndex, state.items, state.heightCache);
+		const offset = entryIndex === state.firstIndex ? 1 : 0;
+		const pivotIndex = getPivotIndex(state.firstIndex, state.lastIndex, state.items, state.heightCache, offset);
 		const isChangingAbovePivot = (entryIndex < pivotIndex || state.lastIndex <= pivotIndex);
 		const isListShrinking = listHeight < state.listHeight;
 
