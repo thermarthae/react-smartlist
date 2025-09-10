@@ -1,4 +1,4 @@
-export { default } from './VirtualList';
-export type { TProps as TVirtualListProps, TWindowEdges } from './VirtualList';
+export { default } from './VirtualList.tsx';
+export type { TProps as TVirtualListProps, TWindowEdges } from './VirtualList.tsx';
 
-export type { TChildrenProps } from './VirtualListItem';
+export type { TChildrenProps } from './VirtualListItem.tsx';
