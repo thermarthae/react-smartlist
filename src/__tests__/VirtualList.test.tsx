@@ -28,7 +28,6 @@ vi.useFakeTimers();
 
 describe('VirtualList', () => {
 	const estimatedItemHeight = 50;
-	const windowInnerHeight = 768; // jsdom sets 768px as a default `window.innerHeight` value
 
 	const genItemArray = (length: number): TItemData[] => [...Array(length) as unknown[]].map((_v, index) => ({
 		id: index,
@@ -98,7 +97,7 @@ describe('VirtualList', () => {
 
 		const nailPoints = genNailPoints();
 		const estimatedListHeight = parseInt(list.style.height, 10);
-		const expectedItemsCount = nailPoints.findIndex(i => i >= windowInnerHeight);
+		const expectedItemsCount = nailPoints.findIndex(i => i >= window.innerHeight);
 		const expectedListHeight = nailPoints[expectedItemsCount]
 			+ (nailPoints.length - expectedItemsCount) * estimatedItemHeight;
 
@@ -118,7 +117,7 @@ describe('VirtualList', () => {
 	it('should handle `disableMeasurment` prop', () => {
 		const { container } = render(<VirtualList {...defaultProps} disableMeasurment />);
 		const list = container.firstElementChild as HTMLElement;
-		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= windowInnerHeight);
+		const expectedItemsCount = estimatedNailPoints.findIndex(i => i >= window.innerHeight);
 		const expectedListHeight = defaultProps.items.length * estimatedItemHeight;
 
 		triggerMeasurement();
@@ -172,7 +171,7 @@ describe('VirtualList', () => {
 		const { container } = render(<VirtualList {...defaultProps} overscanPadding={padding} />);
 		const list = container.firstElementChild as HTMLElement;
 
-		const paddedWindow = windowInnerHeight + padding;
+		const paddedWindow = window.innerHeight + padding;
 		const expectedCount = estimatedNailPoints.findIndex(i => i >= paddedWindow);
 
 		expect(list.childElementCount).toEqual(expectedCount);
@@ -185,7 +184,7 @@ describe('VirtualList', () => {
 
 		triggerMeasurement();
 
-		const expectedCount = genNailPoints().findIndex(i => i >= (windowInnerHeight + padding));
+		const expectedCount = genNailPoints().findIndex(i => i >= (window.innerHeight + padding));
 		expect(list.childElementCount).toEqual(expectedCount);
 	});
 
@@ -194,14 +193,14 @@ describe('VirtualList', () => {
 		const { container, rerender } = render(<VirtualList {...defaultProps} overscanPadding={initialPadding} />);
 		const list = container.firstElementChild as HTMLElement;
 
-		const initWindowHeight = windowInnerHeight + initialPadding;
+		const initWindowHeight = window.innerHeight + initialPadding;
 		const initCount = estimatedNailPoints.findIndex(i => i >= initWindowHeight);
 		expect(list.childElementCount).toEqual(initCount);
 		//
 		const changedPadding = 500;
 		rerender(<VirtualList {...defaultProps} overscanPadding={changedPadding} />);
 
-		const newWindowHeight = windowInnerHeight + changedPadding;
+		const newWindowHeight = window.innerHeight + changedPadding;
 		const newCount = estimatedNailPoints.findIndex(i => i >= newWindowHeight);
 		expect(list.childElementCount).toEqual(newCount);
 		expect(initCount).not.toEqual(newCount);
@@ -250,7 +249,7 @@ describe('VirtualList', () => {
 		const list = container.firstElementChild as HTMLElement;
 		const listHeight = parseInt(list.style.height, 10);
 
-		simulateScroll(listHeight - windowInnerHeight);
+		simulateScroll(listHeight - window.innerHeight);
 		const bottomItems = getAllByText(/ListItem/);
 
 		simulateScroll(0);
@@ -267,13 +266,13 @@ describe('VirtualList', () => {
 
 	it('should not jump when measured item is larger than viewport', () => {
 		const items: TItemData[] = [
-			{ id: 0, height: windowInnerHeight * 2 },
+			{ id: 0, height: window.innerHeight * 2 },
 			...defaultProps.items.slice(1),
 		];
 		const { getAllByText } = render(<VirtualList {...defaultProps} items={items} />);
 
 		const initRender = getAllByText(/ListItem/);
-		expect(initRender).toHaveLength(Math.ceil(windowInnerHeight / defaultProps.estimatedItemHeight));
+		expect(initRender).toHaveLength(Math.ceil(window.innerHeight / estimatedItemHeight));
 
 		triggerMeasurement();
 
