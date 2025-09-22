@@ -1,5 +1,4 @@
 import {
-	ElementType,
 	memo,
 	useCallback,
 	useEffect,
@@ -15,12 +14,11 @@ import { shallowEqualObjects } from 'shallow-equal';
 
 import type { TData } from './VirtualList.tsx';
 
-export type TSharedProps<P> = Omit<P, keyof TChildrenProps | 'children'>;
-export type TChildrenProps<D extends TData = TData, El extends HTMLElement = HTMLElement> = {
+export type TItemProps<D extends TData = TData> = {
 	data: D;
 	isAlreadyMeasured: boolean;
 	rootElProps: {
-		ref: React.Ref<El>;
+		ref: React.Ref<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 		'data-index': number;
 		'data-measured': boolean;
 		style: {
@@ -31,19 +29,20 @@ export type TChildrenProps<D extends TData = TData, El extends HTMLElement = HTM
 		};
 	};
 };
+export type TItemSharedProps<P> = Omit<P, keyof TItemProps | 'children'>;
 
-export type TProps<D extends TData = TData, C extends ElementType = ElementType> = {
-	component: C;
-	itemData: D;
+export type TProps<P extends TItemProps> = {
+	component: React.ComponentType<P>;
+	itemData: TData;
 	itemIndex: number;
 	nailPoint: number;
-	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
+	sharedProps?: TItemSharedProps<P>;
 	isAlreadyMeasured: boolean;
 	isMeasurmentDisabled?: boolean;
 	onMeasure: (index: number, height: number) => void;
 };
 
-function VirtualListItem<D extends TData, C extends ElementType>({
+function VirtualListItem<P extends TItemProps>({
 	component,
 	itemData,
 	itemIndex,
@@ -52,7 +51,7 @@ function VirtualListItem<D extends TData, C extends ElementType>({
 	isAlreadyMeasured,
 	isMeasurmentDisabled,
 	onMeasure,
-}: TProps<D, C>) {
+}: TProps<P>) {
 	const ref = useRef<HTMLElement>(null);
 	const observer = useRef<ResizeObserver | null>(null);
 
@@ -84,23 +83,21 @@ function VirtualListItem<D extends TData, C extends ElementType>({
 		return () => cancelCallback(node);
 	}, [isMeasurmentDisabled, isAlreadyMeasured, handleResize]);
 
-	const Child = component as React.ComponentType<TChildrenProps<D>>;
+	const Item = component as React.ComponentType<TItemProps>;
 	return (
-		<Child
-			{...{
-				...sharedProps,
-				data: itemData,
-				isAlreadyMeasured,
-				rootElProps: {
-					ref,
-					'data-index': itemIndex,
-					'data-measured': isAlreadyMeasured,
-					style: {
-						position: 'absolute',
-						width: '100%',
-						transform: `translateY(${nailPoint}px)`,
-						contain: 'content',
-					},
+		<Item
+			{...sharedProps}
+			data={itemData}
+			isAlreadyMeasured={isAlreadyMeasured}
+			rootElProps={{
+				ref,
+				'data-index': itemIndex,
+				'data-measured': isAlreadyMeasured,
+				style: {
+					position: 'absolute',
+					width: '100%',
+					transform: `translateY(${nailPoint}px)`,
+					contain: 'content',
 				},
 			}}
 		/>
@@ -113,4 +110,4 @@ export default memo(VirtualListItem, (prev, next) => {
 
 	if (!shallowEqualObjects(rest, nextRest) || !shallowEqualObjects(data, nextData)) return false;
 	return true;
-});
+}) as typeof VirtualListItem;

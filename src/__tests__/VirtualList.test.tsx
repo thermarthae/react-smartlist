@@ -12,7 +12,7 @@ import {
 } from 'vitest';
 
 import VirtualList, { TProps as TVirtualListProps } from '../VirtualList.tsx';
-import VirtualListItem, { TChildrenProps } from '../VirtualListItem.tsx';
+import VirtualListItem, { TItemProps } from '../VirtualListItem.tsx';
 
 type TSharedProps = {
 	title?: string;
@@ -21,8 +21,8 @@ type TItemData = {
 	id: number;
 	height: number;
 };
-type TItemComponentProps = TChildrenProps<TItemData, HTMLDivElement> & TSharedProps;
-type TListProps = TVirtualListProps<TItemData, React.FC<TItemComponentProps>>;
+type TItemComponentProps = TItemProps<TItemData> & TSharedProps;
+type TListProps = TVirtualListProps<TItemComponentProps>;
 
 vi.useFakeTimers();
 
@@ -287,7 +287,7 @@ describe('VirtualList', () => {
 			sharedProps: { title: '0' },
 			initState: {},
 		};
-		const listRender = vi.spyOn(VirtualList, 'type');
+		const listRender = vi.spyOn(VirtualList as React.MemoExoticComponent<typeof VirtualList>, 'type');
 		const { rerender } = render(<VirtualList {...prevProps} />);
 
 		const testProps = (newProps: Partial<TListProps>, shouldRerender: boolean) => {
@@ -310,7 +310,7 @@ describe('VirtualList', () => {
 	});
 
 	it('should handle the measurement when item is no longer visible', () => {
-		const ListItem = vi.spyOn(VirtualListItem, 'type');
+		const ListItem = vi.spyOn(VirtualListItem as React.MemoExoticComponent<typeof VirtualListItem>, 'type');
 		const { container, getAllByText } = render(<VirtualList {...defaultProps} estimatedItemHeight={1} />);
 		const list = container.firstElementChild as HTMLElement;
 

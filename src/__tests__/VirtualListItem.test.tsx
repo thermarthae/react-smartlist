@@ -15,14 +15,14 @@ import {
 	vi,
 } from 'vitest';
 
-import VirtualListItem, { TChildrenProps, TProps as TVirtualListItemProps } from '../VirtualListItem.tsx';
+import VirtualListItem, { TItemProps, TProps as TVirtualListItemProps } from '../VirtualListItem.tsx';
 
 type TSharedProps = {
 	title?: string;
 };
 type TItemData = { id: number; height: number };
-type TItemComponentProps = TChildrenProps<TItemData, HTMLDivElement> & TSharedProps;
-type TListItemProps = TVirtualListItemProps<TItemData, React.FC<TItemComponentProps>>;
+type TItemComponentProps = TItemProps<TItemData> & TSharedProps;
+type TListItemProps = TVirtualListItemProps<TItemComponentProps>;
 
 vi.useFakeTimers();
 

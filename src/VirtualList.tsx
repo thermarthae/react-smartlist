@@ -1,5 +1,4 @@
 import {
-	ElementType,
 	memo,
 	useCallback,
 	useEffect,
@@ -8,7 +7,7 @@ import {
 } from 'react';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import VirtualListItem, { TSharedProps } from './VirtualListItem.tsx';
+import VirtualListItem, { TItemProps, TItemSharedProps } from './VirtualListItem.tsx';
 
 export type TID = string | number;
 export type TData = {
@@ -25,15 +24,15 @@ export type TWindowEdges = {
 	isInView: boolean;
 };
 
-export type TProps<D extends TData = TData, C extends ElementType = ElementType> = {
+export type TProps<P extends TItemProps> = {
 	/**
 	 * Your component that is used to render a single list item.
 	 */
-	component: C;
+	component: React.ComponentType<P>;
 	/**
 	 * An array of actual data mapped to all children.
 	 */
-	items: D[];
+	items: Array<P['data']>;
 	/**
 	 * The estimated height of a single rendered item.
 	 *
@@ -65,7 +64,7 @@ export type TProps<D extends TData = TData, C extends ElementType = ElementType>
 	/**
 	 * Props passed to every rendered item.
 	 */
-	sharedProps?: TSharedProps<React.ComponentPropsWithoutRef<C>>;
+	sharedProps?: TItemSharedProps<P>;
 	/**
 	 * An advanced prop that can be used to overwrite the initial `VirtualList` state.
 	 *
@@ -280,7 +279,7 @@ const reducer = (state: TState, action: TAction): TState => {
 	return state;
 };
 
-function VirtualList<D extends TData, C extends ElementType>({
+function VirtualList<P extends TItemProps>({
 	component,
 	items,
 	estimatedItemHeight,
@@ -291,7 +290,7 @@ function VirtualList<D extends TData, C extends ElementType>({
 	disableMeasurment,
 	onScroll,
 	style,
-}: TProps<D, C>) {
+}: TProps<P>) {
 	const rootElRef = useRef<HTMLDivElement>(null);
 	const [state, dispatch] = useReducer(reducer, 0, () => ({
 		rootElRef,
@@ -375,4 +374,4 @@ export default memo(VirtualList, (prev, next) => {
 
 	if (!shallowEqualObjects(SP, nextSP) || !shallowEqualObjects(prevRest, nextRest)) return false;
 	return true;
-});
+}) as typeof VirtualList;
