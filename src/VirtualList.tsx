@@ -170,21 +170,25 @@ const rebuildNailPoints = (
 	items: TData[],
 	getHeight: (id: TID) => number,
 ) => {
-	const nailPoints = prevNailPoints.slice(0, start + 1);
-	for (let i = start; i < items.length - 1; i++) {
+	if (items.length === 0) return { nailPoints: [], listHeight: 0 };
+
+	const nailPoints = (prevNailPoints.length > 0) ? prevNailPoints.slice(0, start + 1) : [0];
+	for (let i = clampIntoArrRange(nailPoints, start); i < items.length - 1; i++) {
 		const nailPoint = nailPoints[i];
 		const height = getHeight(items[i].id);
 
 		nailPoints.push(nailPoint + height);
 	}
 
-	const last = Math.max(0, items.length - 1); // `items` may be empty
+	const last = items.length - 1;
 	const listHeight = nailPoints[last] + getHeight(items[last].id);
 
 	return { nailPoints, listHeight };
 };
 
 const getPivotIndex = (first: number, last: number, items: TData[], heightCache: Record<TID, number>, offset = 0) => {
+	if (items.length === 0) return 0;
+
 	let index = first;
 	for (let i = first + offset; i <= last; i++) {
 		if (heightCache[items[i].id]) {
@@ -298,7 +302,7 @@ function VirtualList<P extends TItemProps>({
 		estimatedItemHeight,
 		overscanPadding,
 		heightCache: {},
-		isInView: true,
+		isInView: items.length > 0,
 		nailPoints: items.map((_data, i) => i * estimatedItemHeight),
 		listHeight: items.length * estimatedItemHeight,
 		firstIndex: 0,

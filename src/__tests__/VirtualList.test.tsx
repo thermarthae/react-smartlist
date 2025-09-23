@@ -131,12 +131,17 @@ describe('VirtualList', () => {
 		const initialItems = genItemArray(5); // 0,1,2,3,4
 		const updatedItems = genItemArray(10).slice(5); // 5,6,7,8,9
 
-		const { rerender } = render(<VirtualList {...defaultProps} items={initialItems} />);
-		rerender(<VirtualList {...defaultProps} items={updatedItems} />);
+		const { rerender, queryAllByText } = render(<VirtualList {...defaultProps} items={initialItems} />);
 
-		const calls = ItemComponent.mock.calls.map(item => item[0].data);
-		expect(calls).toEqual([...initialItems, ...updatedItems]);
-		expect(ItemComponent).toHaveBeenCalledTimes(10);
+		rerender(<VirtualList {...defaultProps} items={updatedItems} />);
+		expect(queryAllByText(/ListItem/)).toHaveLength(5);
+		expect(ItemComponent.mock.calls.map(item => item[0].data)).toEqual([...initialItems, ...updatedItems]);
+
+		rerender(<VirtualList {...defaultProps} items={[]} />);
+		expect(queryAllByText(/ListItem/)).toHaveLength(0);
+
+		rerender(<VirtualList {...defaultProps} items={updatedItems} />);
+		expect(queryAllByText(/ListItem/)).toHaveLength(5);
 	});
 
 	it('should support a `className` prop', () => {
