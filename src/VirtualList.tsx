@@ -1,13 +1,14 @@
+/* eslint-disable react-hooks/refs */
 import {
 	memo,
 	useCallback,
 	useEffect,
-	useReducer,
 	useRef,
+	useState,
 } from 'react';
 import { shallowEqualObjects } from 'shallow-equal';
 
-import VirtualListItem, { TItemProps, TItemSharedProps } from './VirtualListItem.tsx';
+import VirtualListItem, { type TItemProps, type TItemSharedProps } from './VirtualListItem.tsx';
 
 export type TID = string | number;
 export type TData = {
@@ -93,7 +94,6 @@ type TState = {
 	items: TData[];
 	estimatedItemHeight: number;
 	overscanPadding: number;
-	rootElRef: React.RefObject<HTMLDivElement | null>;
 	heightCache: Record<TID, number>;
 	isInView: boolean;
 	nailPoints: number[];
@@ -101,18 +101,6 @@ type TState = {
 	firstIndex: number;
 	lastIndex: number;
 };
-
-type TAction = (
-	| { type: 'scroll' }
-	| { type: 'init' }
-	| { type: 'measure'; index: number; height: number }
-	| {
-		type: 'props-update';
-		items: TData[];
-		estimatedItemHeight: number;
-		overscanPadding: number;
-	}
-);
 
 const getWindowEdges = (listHeight: number, rootElOffsetTop = 0, overscanPadding: number): TWindowEdges => {
 	const rawTop = document.documentElement.scrollTop - rootElOffsetTop;
@@ -202,87 +190,6 @@ const getPivotIndex = (first: number, last: number, items: TData[], heightCache:
 
 const clampIntoArrRange = (arr: unknown[], value: number) => Math.max(0, Math.min(value, arr.length - 1));
 
-let prevAction: TAction | null = null;
-const isReactStrictModeDuplicate = (action: TAction) => {
-	if (Object.is(action, prevAction)) return true;
-	prevAction = action;
-
-	return false;
-};
-
-const reducer = (state: TState, action: TAction): TState => {
-	const rootElOffsetTop = state.rootElRef.current?.offsetTop;
-	const getHeight = (id: TID) => state.heightCache[id] ?? state.estimatedItemHeight;
-
-	if (action.type === 'scroll' || action.type === 'init') {
-		if (!state.items[0]) return state;
-
-		const edges = getWindowEdges(state.listHeight, rootElOffsetTop, state.overscanPadding);
-		const indexes = getVisibleIndexes(state.firstIndex, edges, state.nailPoints, state.items, getHeight);
-
-		// Bailout if a state doesn't require an update to prevent empty render commit.
-		// Every scroll event would be shown inside the React DevTools profiler, which could be confusing.
-		const nextState = { ...state, ...indexes };
-		if (shallowEqualObjects(state, nextState)) return state;
-		return nextState;
-	}
-
-	if (action.type === 'measure') {
-		const { index: entryIndex, height: entryHeight } = action;
-		const entryID = state.items[entryIndex].id;
-
-		if (state.heightCache[entryID] === entryHeight) return state;
-		const heightCache = { ...state.heightCache, [entryID]: entryHeight };
-		const getFreshHeight = (id: TID) => heightCache[id] ?? state.estimatedItemHeight;
-
-		const { nailPoints, listHeight } = rebuildNailPoints(entryIndex, state.nailPoints, state.items, getFreshHeight);
-
-		const offset = entryIndex === state.firstIndex ? 1 : 0;
-		const pivotIndex = getPivotIndex(state.firstIndex, state.lastIndex, state.items, state.heightCache, offset);
-		const isChangingAbovePivot = (entryIndex < pivotIndex || state.lastIndex <= pivotIndex);
-		const isListShrinking = listHeight < state.listHeight;
-
-		if (!isReactStrictModeDuplicate(action) && (isChangingAbovePivot || isListShrinking)) {
-			const pivotHeightDiff = getHeight(state.items[pivotIndex].id) - getFreshHeight(state.items[pivotIndex].id);
-			const pivotNailPointDiff = state.nailPoints[pivotIndex] - nailPoints[pivotIndex];
-
-			// Offset the difference to prevent the content from jumping around.
-			document.documentElement.scrollTop -= pivotNailPointDiff + pivotHeightDiff;
-		}
-
-		const edges = getWindowEdges(listHeight, rootElOffsetTop, state.overscanPadding);
-		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, state.items, getFreshHeight);
-
-		return { ...state, heightCache, nailPoints, listHeight, ...indexes };
-	}
-
-	if (action.type === 'props-update') {
-		const { items, estimatedItemHeight, overscanPadding } = action;
-		const getFreshHeight = (id: TID) => state.heightCache[id] ?? estimatedItemHeight;
-
-		const firstIndex = clampIntoArrRange(items, state.firstIndex);
-		const lastIndex = clampIntoArrRange(items, state.lastIndex);
-		const pivotIndex = getPivotIndex(firstIndex, lastIndex, items, state.heightCache);
-		const { nailPoints, listHeight } = rebuildNailPoints(0, state.nailPoints, items, getFreshHeight);
-		const edges = getWindowEdges(listHeight, rootElOffsetTop, overscanPadding);
-		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, items, getFreshHeight);
-
-		return {
-			...state,
-			items,
-			estimatedItemHeight,
-			overscanPadding,
-			nailPoints,
-			listHeight,
-			firstIndex,
-			lastIndex,
-			...indexes,
-		};
-	}
-
-	return state;
-};
-
 function VirtualList<P extends TItemProps>({
 	component,
 	items,
@@ -296,8 +203,7 @@ function VirtualList<P extends TItemProps>({
 	style,
 }: TProps<P>) {
 	const rootElRef = useRef<HTMLDivElement>(null);
-	const [state, dispatch] = useReducer(reducer, 0, () => ({
-		rootElRef,
+	const [state, setState] = useState<TState>(() => ({
 		items,
 		estimatedItemHeight,
 		overscanPadding,
@@ -309,32 +215,96 @@ function VirtualList<P extends TItemProps>({
 		lastIndex: 0,
 		...initState,
 	}));
-	const onMeasure = useCallback((index: number, height: number) => dispatch({ type: 'measure', index, height }), []);
+	const pendingState = useRef<TState>(state);
+	const setBothStates = useCallback((nextState: TState) => {
+		pendingState.current = nextState;
+		setState(nextState);
+	}, []);
 
-	useEffect(() => dispatch({ type: 'init' }), []);
+	const handleItemMeasure = useCallback((entryIndex: number, entryHeight: number) => {
+		const s = pendingState.current;
+		const entryID = s.items[entryIndex].id;
+		if (s.heightCache[entryID] === entryHeight) return;
+
+		const heightCache = { ...s.heightCache, [entryID]: entryHeight };
+		const getFreshHeight = (id: TID) => heightCache[id] ?? s.estimatedItemHeight;
+
+		const { nailPoints, listHeight } = rebuildNailPoints(entryIndex, s.nailPoints, s.items, getFreshHeight);
+
+		const offset = entryIndex === s.firstIndex ? 1 : 0;
+		const pivotIndex = getPivotIndex(s.firstIndex, s.lastIndex, s.items, s.heightCache, offset);
+		const isChangingAbovePivot = (entryIndex < pivotIndex || s.lastIndex <= pivotIndex);
+		const isListShrinking = listHeight < s.listHeight;
+
+		if (isChangingAbovePivot || isListShrinking) {
+			const getHeight = (id: TID) => s.heightCache[id] ?? s.estimatedItemHeight;
+			const pivotHeightDiff = getHeight(s.items[pivotIndex].id) - getFreshHeight(s.items[pivotIndex].id);
+			const pivotNailPointDiff = s.nailPoints[pivotIndex] - nailPoints[pivotIndex];
+
+			// Offset the difference to prevent the content from jumping around.
+			document.documentElement.scrollTop -= pivotNailPointDiff + pivotHeightDiff;
+		}
+
+		const edges = getWindowEdges(listHeight, rootElRef.current?.offsetTop, s.overscanPadding);
+		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, s.items, getFreshHeight);
+
+		setBothStates({ ...s, heightCache, nailPoints, listHeight, ...indexes });
+	}, [setBothStates]);
+
+	const handleWindowChange = useCallback(() => {
+		const s = pendingState.current;
+		if (!s.items[0]) return;
+
+		const edges = getWindowEdges(s.listHeight, rootElRef.current?.offsetTop, s.overscanPadding);
+		onScroll?.(edges);
+
+		const getHeight = (id: TID) => s.heightCache[id] ?? s.estimatedItemHeight;
+		const indexes = getVisibleIndexes(s.firstIndex, edges, s.nailPoints, s.items, getHeight);
+
+		const nextState = { ...s, ...indexes };
+		if (shallowEqualObjects(pendingState.current, nextState)) return;
+
+		setBothStates(nextState);
+	}, [onScroll, setBothStates]);
+
+	// Recalculate the state once the DOM has been rendered
+	useEffect(handleWindowChange, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
-		const handleScroll = () => {
-			onScroll?.(getWindowEdges(state.listHeight, rootElRef.current?.offsetTop, overscanPadding));
-
-			dispatch({ type: 'scroll' });
-		};
-
-		document.addEventListener('scroll', handleScroll);
-		window.addEventListener('resize', handleScroll);
+		document.addEventListener('scroll', handleWindowChange);
+		window.addEventListener('resize', handleWindowChange);
 
 		return () => {
-			document.removeEventListener('scroll', handleScroll);
-			window.removeEventListener('resize', handleScroll);
+			document.removeEventListener('scroll', handleWindowChange);
+			window.removeEventListener('resize', handleWindowChange);
 		};
-	}, [state.listHeight, overscanPadding, onScroll]);
+	}, [handleWindowChange]);
 
 	if (
 		items !== state.items
 		|| estimatedItemHeight !== state.estimatedItemHeight
 		|| overscanPadding !== state.overscanPadding
 	) {
-		dispatch({ type: 'props-update', items, estimatedItemHeight, overscanPadding });
+		const getFreshHeight = (id: TID) => state.heightCache[id] ?? estimatedItemHeight;
+
+		const firstIndex = clampIntoArrRange(items, state.firstIndex);
+		const lastIndex = clampIntoArrRange(items, state.lastIndex);
+		const pivotIndex = getPivotIndex(firstIndex, lastIndex, items, state.heightCache);
+		const { nailPoints, listHeight } = rebuildNailPoints(0, state.nailPoints, items, getFreshHeight);
+		const edges = getWindowEdges(listHeight, rootElRef.current?.offsetTop, overscanPadding);
+		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, items, getFreshHeight);
+
+		setBothStates({
+			...state,
+			items,
+			estimatedItemHeight,
+			overscanPadding,
+			nailPoints,
+			listHeight,
+			firstIndex,
+			lastIndex,
+			...indexes,
+		});
 		return null;
 	}
 
@@ -362,7 +332,7 @@ function VirtualList<P extends TItemProps>({
 						isAlreadyMeasured={!!state.heightCache[itemData.id]}
 						nailPoint={state.nailPoints[index]}
 						sharedProps={sharedProps}
-						onMeasure={onMeasure}
+						onMeasure={handleItemMeasure}
 						isMeasurmentDisabled={disableMeasurment}
 					/>
 				);
