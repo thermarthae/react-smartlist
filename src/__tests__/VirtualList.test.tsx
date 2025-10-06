@@ -11,8 +11,8 @@ import {
 	vi,
 } from 'vitest';
 
-import VirtualList, { TProps as TVirtualListProps } from '../VirtualList.tsx';
-import VirtualListItem, { TItemProps } from '../VirtualListItem.tsx';
+import VirtualList, { type TProps as TVirtualListProps } from '../VirtualList.tsx';
+import VirtualListItem, { type TItemProps } from '../VirtualListItem.tsx';
 
 type TSharedProps = {
 	title?: string;
