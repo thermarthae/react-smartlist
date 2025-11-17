@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/refs */
 import {
 	memo,
 	useCallback,
 	useEffect,
+	useLayoutEffect,
 	useRef,
 	useState,
 } from 'react';
@@ -102,8 +102,7 @@ type TState = {
 	lastIndex: number;
 };
 
-const getWindowEdges = (listHeight: number, rootElOffsetTop = 0, overscanPadding: number): TWindowEdges => {
-	const rawTop = document.documentElement.scrollTop - rootElOffsetTop;
+const getWindowEdges = (rawTop: number, listHeight: number, overscanPadding: number): TWindowEdges => {
 	const rawBottom = rawTop + window.innerHeight;
 
 	const bottom = Math.max(0, Math.min(rawBottom + overscanPadding, listHeight));
@@ -221,6 +220,10 @@ function VirtualList<P extends TItemProps>({
 		setState(nextState);
 	}, []);
 
+	const pendingScrollTop = useRef<number | null>(null);
+	const getScrollTop = useCallback(() => pendingScrollTop.current ?? document.documentElement.scrollTop, []);
+	const getRawTop = useCallback(() => getScrollTop() - (rootElRef.current?.offsetTop ?? 0), [getScrollTop]);
+
 	const handleItemMeasure = useCallback((entryIndex: number, entryHeight: number) => {
 		const s = pendingState.current;
 		const entryID = s.items[entryIndex].id;
@@ -242,20 +245,20 @@ function VirtualList<P extends TItemProps>({
 			const pivotNailPointDiff = s.nailPoints[pivotIndex] - nailPoints[pivotIndex];
 
 			// Offset the difference to prevent the content from jumping around.
-			document.documentElement.scrollTop -= pivotNailPointDiff + pivotHeightDiff;
+			pendingScrollTop.current = getScrollTop() - (pivotNailPointDiff + pivotHeightDiff);
 		}
 
-		const edges = getWindowEdges(listHeight, rootElRef.current?.offsetTop, s.overscanPadding);
+		const edges = getWindowEdges(getRawTop(), listHeight, s.overscanPadding);
 		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, s.items, getFreshHeight);
 
 		setBothStates({ ...s, heightCache, nailPoints, listHeight, ...indexes });
-	}, [setBothStates]);
+	}, [getScrollTop, getRawTop, setBothStates]);
 
 	const handleWindowChange = useCallback(() => {
 		const s = pendingState.current;
 		if (!s.items[0]) return;
 
-		const edges = getWindowEdges(s.listHeight, rootElRef.current?.offsetTop, s.overscanPadding);
+		const edges = getWindowEdges(getRawTop(), s.listHeight, s.overscanPadding);
 		onScroll?.(edges);
 
 		const getHeight = (id: TID) => s.heightCache[id] ?? s.estimatedItemHeight;
@@ -265,7 +268,7 @@ function VirtualList<P extends TItemProps>({
 		if (shallowEqualObjects(pendingState.current, nextState)) return;
 
 		setBothStates(nextState);
-	}, [onScroll, setBothStates]);
+	}, [getRawTop, onScroll, setBothStates]);
 
 	// Recalculate the state once the DOM has been rendered
 	useEffect(handleWindowChange, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -280,6 +283,13 @@ function VirtualList<P extends TItemProps>({
 		};
 	}, [handleWindowChange]);
 
+	useLayoutEffect(() => {
+		if (!pendingScrollTop.current) return;
+
+		document.documentElement.scrollTop = pendingScrollTop.current;
+		pendingScrollTop.current = null;
+	}, [state.listHeight]);
+
 	if (
 		items !== state.items
 		|| estimatedItemHeight !== state.estimatedItemHeight
@@ -291,9 +301,10 @@ function VirtualList<P extends TItemProps>({
 		const lastIndex = clampIntoArrRange(items, state.lastIndex);
 		const pivotIndex = getPivotIndex(firstIndex, lastIndex, items, state.heightCache);
 		const { nailPoints, listHeight } = rebuildNailPoints(0, state.nailPoints, items, getFreshHeight);
-		const edges = getWindowEdges(listHeight, rootElRef.current?.offsetTop, overscanPadding);
+		const edges = getWindowEdges(getRawTop(), listHeight, overscanPadding); // eslint-disable-line react-hooks/refs
 		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, items, getFreshHeight);
 
+		// eslint-disable-next-line react-hooks/refs
 		setBothStates({
 			...state,
 			items,
