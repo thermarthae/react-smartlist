@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig, UserConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 
 export default defineConfig({
 	root: './src',
