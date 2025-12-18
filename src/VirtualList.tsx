@@ -284,7 +284,7 @@ function VirtualList<P extends TItemProps>({
 	}, [handleWindowChange]);
 
 	useLayoutEffect(() => {
-		if (!pendingScrollTop.current) return;
+		if (pendingScrollTop.current === null) return;
 
 		document.documentElement.scrollTop = pendingScrollTop.current;
 		pendingScrollTop.current = null;
