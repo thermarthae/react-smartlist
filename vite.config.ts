@@ -5,16 +5,13 @@ export default defineConfig({
 	root: './src',
 	cacheDir: '../.yarn/.cache/vite',
 	plugins: [react()],
-	experimental: {
-		enableNativePlugin: false,
-	},
 	test: {
 		clearMocks: true,
 		environment: 'happy-dom',
 		setupFiles: [
-			'./tests/ReactTestingLibrary.setup.ts',
-			'./tests/ResizeObserver.setup.ts',
-			'./tests/SchedulerMock.setup.ts',
+			'../tests/ReactTestingLibrary.setup.ts',
+			'../tests/ResizeObserver.setup.ts',
+			'../tests/SchedulerMock.setup.ts',
 		],
 	},
 } as UserConfig);

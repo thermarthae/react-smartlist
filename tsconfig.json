@@ -18,7 +18,11 @@
 		"forceConsistentCasingInFileNames": true,
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"baseUrl": "./src",
+		"paths": {
+			"*": [
+				"./src/*"
+			]
+		},
 		"declaration": true,
 		"allowJs": true,
 		"checkJs": true,

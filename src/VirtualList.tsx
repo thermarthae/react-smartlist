@@ -271,7 +271,7 @@ function VirtualList<P extends TItemProps>({
 	}, [getRawTop, onScroll, setBothStates]);
 
 	// Recalculate the state once the DOM has been rendered
-	useEffect(handleWindowChange, []); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect(handleWindowChange, []); // eslint-disable-line @eslint-react/exhaustive-deps
 
 	useEffect(() => {
 		document.addEventListener('scroll', handleWindowChange);
@@ -301,10 +301,9 @@ function VirtualList<P extends TItemProps>({
 		const lastIndex = clampIntoArrRange(items, state.lastIndex);
 		const pivotIndex = getPivotIndex(firstIndex, lastIndex, items, state.heightCache);
 		const { nailPoints, listHeight } = rebuildNailPoints(0, state.nailPoints, items, getFreshHeight);
-		const edges = getWindowEdges(getRawTop(), listHeight, overscanPadding); // eslint-disable-line react-hooks/refs
+		const edges = getWindowEdges(getRawTop(), listHeight, overscanPadding);
 		const indexes = getVisibleIndexes(pivotIndex, edges, nailPoints, items, getFreshHeight);
 
-		// eslint-disable-next-line react-hooks/refs
 		setBothStates({
 			...state,
 			items,

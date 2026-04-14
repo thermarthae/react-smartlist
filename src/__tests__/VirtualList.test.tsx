@@ -300,8 +300,8 @@ describe('VirtualList', () => {
 			prevProps = { ...prevProps, ...newProps };
 			rerender(<VirtualList {...prevProps} />);
 
-			if (shouldRerender) expect(listRender).toBeCalled();
-			else expect(listRender).not.toBeCalled();
+			if (shouldRerender) expect(listRender).toHaveBeenCalled();
+			else expect(listRender).not.toHaveBeenCalled();
 		};
 
 		testProps({}, false);
@@ -319,7 +319,7 @@ describe('VirtualList', () => {
 		const { container, getAllByText } = render(<VirtualList {...defaultProps} estimatedItemHeight={1} />);
 		const list = container.firstElementChild as HTMLElement;
 
-		expect(ListItem).toBeCalled();
+		expect(ListItem).toHaveBeenCalled();
 		const lastOfListItemProps = ListItem.mock.lastCall![0];
 
 		triggerMeasurement();

@@ -12,6 +12,9 @@ const config = [
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
+		rules: {
+			'@eslint-react/naming-convention-ref-name': 0,
+		},
 	},
 ];
 
